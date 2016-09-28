@@ -350,8 +350,7 @@ namespace ts {
             ResolvedReturnType
         }
 
-        const builtinGlobals = createMap<Symbol>();
-        _s(builtinGlobals, undefinedSymbol.name, undefinedSymbol);
+        const builtinGlobals = createMapWithEntry(undefinedSymbol.name, undefinedSymbol);
 
         initializeTypeChecker();
 
@@ -3770,8 +3769,7 @@ namespace ts {
                     type.typeParameters = concatenate(outerTypeParameters, localTypeParameters);
                     type.outerTypeParameters = outerTypeParameters;
                     type.localTypeParameters = localTypeParameters;
-                    (<GenericType>type).instantiations = createMap<TypeReference>();
-                    _s((<GenericType>type).instantiations, getTypeListId(type.typeParameters), <GenericType>type);
+                    (<GenericType>type).instantiations = createMapWithEntry(getTypeListId(type.typeParameters), <GenericType>type);
                     (<GenericType>type).target = <GenericType>type;
                     (<GenericType>type).typeArguments = type.typeParameters;
                     type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter | TypeFlags.ThisType);
@@ -3812,8 +3810,7 @@ namespace ts {
                     if (typeParameters) {
                         // Initialize the instantiation cache for generic type aliases. The declared type corresponds to
                         // an instantiation of the type alias with the type parameters supplied as type arguments.
-                        links.instantiations = createMap<Type>();
-                        _s(links.instantiations, getTypeListId(links.typeParameters), type);
+                        links.instantiations = createMapWithEntry(getTypeListId(links.typeParameters), type);
                     }
                 }
                 else {
@@ -4024,6 +4021,7 @@ namespace ts {
         }
 
         function createSymbolTable(symbols: Symbol[]): SymbolTable {
+            //helper fn for this
             const result = createMap<Symbol>();
             for (const symbol of symbols) {
                 _s(result, symbol.name, symbol);
@@ -4034,6 +4032,7 @@ namespace ts {
         // The mappingThisOnly flag indicates that the only type parameter being mapped is "this". When the flag is true,
         // we check symbols to see if we can quickly conclude they are free of "this" references, thus needing no instantiation.
         function createInstantiatedSymbolTable(symbols: Symbol[], mapper: TypeMapper, mappingThisOnly: boolean): SymbolTable {
+            //helper fn for this
             const result = createMap<Symbol>();
             for (const symbol of symbols) {
                 _s(result, symbol.name, mappingThisOnly && isIndependentMember(symbol) ? symbol : instantiateSymbol(symbol, mapper));
@@ -5334,8 +5333,7 @@ namespace ts {
             type.typeParameters = typeParameters;
             type.outerTypeParameters = undefined;
             type.localTypeParameters = typeParameters;
-            type.instantiations = createMap<TypeReference>();
-            _s(type.instantiations, getTypeListId(type.typeParameters), <GenericType>type);
+            type.instantiations = createMapWithEntry(getTypeListId(type.typeParameters), <GenericType>type);
             type.target = <GenericType>type;
             type.typeArguments = type.typeParameters;
             type.thisType = <TypeParameter>createType(TypeFlags.TypeParameter | TypeFlags.ThisType);
@@ -6802,8 +6800,7 @@ namespace ts {
                 }
                 sourceStack[depth] = source;
                 targetStack[depth] = target;
-                maybeStack[depth] = createMap<RelationComparisonResult>();
-                _s(maybeStack[depth], id, RelationComparisonResult.Succeeded);
+                maybeStack[depth] = createMapWithEntry(id, RelationComparisonResult.Succeeded);
                 depth++;
                 const saveExpandingFlags = expandingFlags;
                 if (!(expandingFlags & 1) && isDeeplyNestedGeneric(source, sourceStack, depth)) expandingFlags |= 1;
@@ -7485,6 +7482,7 @@ namespace ts {
         }
 
         function transformTypeOfMembers(type: Type, f: (propertyType: Type) => Type) {
+            //helper fn
             const members = createMap<Symbol>();
             for (const property of getPropertiesOfObjectType(type)) {
                 const original = getTypeOfSymbol(property);
@@ -17041,6 +17039,7 @@ namespace ts {
                 return true;
             }
 
+            //helper fn for creating map here
             const seen = createMap<{ prop: Symbol; containingType: Type }>();
             forEach(resolveDeclaredMembers(type).declaredProperties, p => { _s(seen, p.name, { prop: p, containingType: type }); });
             let ok = true;

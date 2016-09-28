@@ -68,6 +68,13 @@ namespace ts {
         ? <T>() => new Map<T>()
         : createDictionaryModeObject;
 
+    //rename, move
+    export function createMapWithEntry<T>(key: string, value: T): Map<T> {
+        const map = createMap<T>();
+        _s(map, key, value);
+        return map;
+    }
+
     //move
     export function createMapFromMapLike<T>(template: MapLike<T>) {
         const map = createMap<T>();
@@ -328,7 +335,7 @@ namespace ts {
         return !_someKey(map, () => true);
     }
 
-    //rename these
+    //Use a NumberMap type instead
     export function _deleteWakka(map: Map<any>, key: any): void {
         _delete(map, key.toString());
     }
