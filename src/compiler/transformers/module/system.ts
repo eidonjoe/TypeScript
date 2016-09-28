@@ -1330,9 +1330,9 @@ namespace ts {
                 const externalImport = externalImports[i];
                 const externalModuleName = getExternalModuleNameLiteral(externalImport, currentSourceFile, host, resolver, compilerOptions);
                 const text = externalModuleName.text;
-                if (_has(groupIndices, text)) {
+                if (groupIndices.has(text)) {
                     // deduplicate/group entries in dependency list by the dependency name
-                    const groupIndex = _g(groupIndices, text);
+                    const groupIndex = groupIndices.get(text);
                     dependencyGroups[groupIndex].externalImports.push(externalImport);
                     continue;
                 }

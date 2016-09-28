@@ -44,7 +44,7 @@ namespace ts.DocumentHighlights {
                 for (const referencedSymbol of referencedSymbols) {
                     for (const referenceEntry of referencedSymbol.references) {
                         const fileName = referenceEntry.fileName;
-                        let documentHighlights = _g(fileNameToDocumentHighlights, fileName);
+                        let documentHighlights = fileNameToDocumentHighlights.get(fileName);
                         if (!documentHighlights) {
                             documentHighlights = { fileName, highlightSpans: [] };
 

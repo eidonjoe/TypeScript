@@ -96,7 +96,7 @@ namespace ts.FindAllReferences {
 
                 const nameTable = getNameTable(sourceFile);
 
-                if (_g(nameTable, internedName) !== undefined) {
+                if (nameTable.get(internedName) !== undefined) {
                     result = result || [];
                     getReferencesInNode(sourceFile, symbol, declaredName, node, searchMeaning, findInStrings, findInComments, result, symbolToIndex);
                 }
@@ -501,7 +501,7 @@ namespace ts.FindAllReferences {
             function findOwnConstructorCalls(classSymbol: Symbol): Node[] {
                 const result: Node[] = [];
 
-                for (const decl of _g(classSymbol.members, "__constructor").declarations) {
+                for (const decl of classSymbol.members.get("__constructor").declarations) {
                     Debug.assert(decl.kind === SyntaxKind.Constructor);
                     const ctrKeyword = decl.getChildAt(0);
                     Debug.assert(ctrKeyword.kind === SyntaxKind.ConstructorKeyword);
@@ -528,7 +528,7 @@ namespace ts.FindAllReferences {
             /** Find references to `super` in the constructor of an extending class.  */
             function superConstructorAccesses(cls: ClassLikeDeclaration): Node[] {
                 const symbol = cls.symbol;
-                const ctr = _g(symbol.members, "__constructor");
+                const ctr = symbol.members.get("__constructor");
                 if (!ctr) {
                     return [];
                 }
@@ -715,8 +715,8 @@ namespace ts.FindAllReferences {
                 }
 
                 const key = getSymbolId(symbol) + "," + getSymbolId(parent);
-                if (_has(cachedResults, key)) {
-                    return _g(cachedResults, key);
+                if (cachedResults.has(key)) {
+                    return cachedResults.get(key);
                 }
 
                 // Set the key so that we don't infinitely recurse
@@ -1078,7 +1078,7 @@ namespace ts.FindAllReferences {
             // the function will add any found symbol of the property-name, then its sub-routine will call
             // getPropertySymbolsFromBaseTypes again to walk up any base types to prevent revisiting already
             // visited symbol, interface "C", the sub-routine will pass the current symbol as previousIterationSymbol.
-            if (_has(previousIterationSymbolsCache, symbol.name)) {
+            if (previousIterationSymbolsCache.has(symbol.name)) {
                 return;
             }
 

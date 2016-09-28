@@ -288,7 +288,7 @@ namespace ts {
 
     /* @internal */
     export function stringToToken(s: string): SyntaxKind {
-        return _g(textToToken, s);
+        return textToToken.get(s);
     }
 
     /* @internal */
@@ -1180,8 +1180,8 @@ namespace ts {
             const len = tokenValue.length;
             if (len >= 2 && len <= 11) {
                 const ch = tokenValue.charCodeAt(0);
-                if (ch >= CharacterCodes.a && ch <= CharacterCodes.z && _has(textToToken, tokenValue)) {
-                    return token = _g(textToToken, tokenValue);
+                if (ch >= CharacterCodes.a && ch <= CharacterCodes.z && textToToken.has(tokenValue)) {
+                    return token = textToToken.get(tokenValue);
                 }
             }
             return token = SyntaxKind.Identifier;

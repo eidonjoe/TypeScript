@@ -28,7 +28,7 @@ namespace ts.performance {
     export function mark(markName: string) {
         if (enabled) {
             _s(marks, markName, timestamp());
-            _s(counts, markName, (_g(counts, markName) || 0) + 1);
+            _s(counts, markName, (counts.get(markName) || 0) + 1);
             profilerEvent(markName);
         }
     }
@@ -44,9 +44,9 @@ namespace ts.performance {
      */
     export function measure(measureName: string, startMarkName?: string, endMarkName?: string) {
         if (enabled) {
-            const end = endMarkName && _g(marks, endMarkName) || timestamp();
-            const start = startMarkName && _g(marks, startMarkName) || profilerStart;
-            _s(measures, measureName, (_g(measures, measureName) || 0) + (end - start));
+            const end = endMarkName && marks.get(endMarkName) || timestamp();
+            const start = startMarkName && marks.get(startMarkName) || profilerStart;
+            _s(measures, measureName, (measures.get(measureName) || 0) + (end - start));
         }
     }
 
@@ -56,7 +56,7 @@ namespace ts.performance {
      * @param markName The name of the mark.
      */
     export function getCount(markName: string) {
-        return counts && _g(counts, markName) || 0;
+        return counts && counts.get(markName) || 0;
     }
 
     /**
@@ -65,7 +65,7 @@ namespace ts.performance {
      * @param measureName The name of the measure whose durations should be accumulated.
      */
     export function getDuration(measureName: string) {
-        return measures && _g(measures, measureName) || 0;
+        return measures && measures.get(measureName) || 0;
     }
 
     /**

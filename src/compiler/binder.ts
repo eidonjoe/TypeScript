@@ -1474,7 +1474,7 @@ namespace ts {
                         ? ElementKind.Property
                         : ElementKind.Accessor;
 
-                    const existingKind = _g(seen, identifier.text);
+                    const existingKind = seen.get(identifier.text);
                     if (!existingKind) {
                         _s(seen, identifier.text, currentKind);
                         continue;
@@ -2048,7 +2048,7 @@ namespace ts {
             constructorFunction.parent = classPrototype;
             classPrototype.parent = leftSideOfAssignment;
 
-            const funcSymbol = _g(container.locals, constructorFunction.text);
+            const funcSymbol = container.locals.get(constructorFunction.text);
             if (!funcSymbol || !(funcSymbol.flags & SymbolFlags.Function || isDeclarationOfFunctionExpression(funcSymbol))) {
                 return;
             }
@@ -2104,7 +2104,7 @@ namespace ts {
             // module might have an exported variable called 'prototype'.  We can't allow that as
             // that would clash with the built-in 'prototype' for the class.
             const prototypeSymbol = createSymbol(SymbolFlags.Property | SymbolFlags.Prototype, "prototype");
-            const symbolExport = _g(symbol.exports, prototypeSymbol.name);
+            const symbolExport = symbol.exports.get(prototypeSymbol.name);
             if (symbolExport) {
                 if (node.name) {
                     node.name.parent = node;

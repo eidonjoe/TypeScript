@@ -438,8 +438,8 @@ namespace ts {
         }
 
         function cachedFileExists(fileName: string): boolean {
-            return _has(cachedExistingFiles, fileName)
-                ? _g(cachedExistingFiles, fileName)
+            return cachedExistingFiles.has(fileName)
+                ? cachedExistingFiles.get(fileName)
                 : _s(cachedExistingFiles, fileName, hostFileExists(fileName));
             //return fileName in cachedExistingFiles
             //     ? cachedExistingFiles[fileName]
@@ -757,7 +757,7 @@ namespace ts {
         for (let i = 0; i < usageColumn.length; i++) {
             const usage = usageColumn[i];
             const description = descriptionColumn[i];
-            const kindsList = _g(optionsDescriptionMap, description);
+            const kindsList = optionsDescriptionMap.get(description);
             output.push(usage + makePadding(marginLength - usage.length + 2) + description + sys.newLine);
 
             if (kindsList) {

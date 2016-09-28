@@ -381,8 +381,8 @@ namespace ts.server {
             }
 
             emit(name: string, args: any): void {
-                if (_has(this.eventHandlers, name)) {
-                    _g(this.eventHandlers, name)(args);
+                if (this.eventHandlers.has(name)) {
+                    this.eventHandlers.get(name)(args);
                 }
             }
 

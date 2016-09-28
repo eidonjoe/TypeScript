@@ -514,8 +514,8 @@ namespace ts {
     export function parseCustomTypeOption(opt: CommandLineOptionOfCustomType, value: string, errors: Diagnostic[]) {
         const key = trimString((value || "")).toLowerCase();
         const map = opt.type;
-        if (_has(map, key)) {
-            return _g(map, key);
+        if (map.has(key)) { //single get
+            return map.get(key);
         }
         else {
             errors.push(createCompilerDiagnosticForInvalidCustomType(opt));
@@ -568,12 +568,12 @@ namespace ts {
                     s = s.slice(s.charCodeAt(1) === CharacterCodes.minus ? 2 : 1).toLowerCase();
 
                     // Try to translate short option names to their full equivalents.
-                    if (_has(shortOptionNames, s)) {
-                        s = _g(shortOptionNames, s);
+                    if (shortOptionNames.has(s)) {
+                        s = shortOptionNames.get(s);
                     }
 
-                    if (_has(optionNameMap, s)) {
-                        const opt = _g(optionNameMap, s);
+                    if (optionNameMap.has(s)) {
+                        const opt = optionNameMap.get(s);
 
                         if (opt.isTSConfigOnly) {
                             errors.push(createCompilerDiagnostic(Diagnostics.Option_0_can_only_be_specified_in_tsconfig_json_file, opt.name));
@@ -745,7 +745,7 @@ namespace ts {
                             break;
                         default:
                             const value = options[name];
-                            let optionDefinition = _g(optionsNameMap, name.toLowerCase());
+                            let optionDefinition = optionsNameMap.get(name.toLowerCase());
                             if (optionDefinition) {
                                 const customTypeMap = getCustomTypeMapOfCommandLineOption(optionDefinition);
                                 if (!customTypeMap) {
@@ -983,8 +983,8 @@ namespace ts {
         const optionNameMap = arrayToMap(optionDeclarations, opt => opt.name);
 
         for (const id in jsonOptions) {
-            if (_has(optionNameMap, id)) {
-                const opt = _g(optionNameMap, id);
+            if (optionNameMap.has(id)) {
+                const opt = optionNameMap.get(id);
                 defaultOptions[opt.name] = convertJsonOption(opt, jsonOptions[id], basePath, errors);
             }
             else {
@@ -1020,8 +1020,8 @@ namespace ts {
 
     function convertJsonOptionOfCustomType(opt: CommandLineOptionOfCustomType, value: string, errors: Diagnostic[]) {
         const key = value.toLowerCase();
-        if (_has(opt.type, key)) {
-            return _g(opt.type, key);
+        if (opt.type.has(key)) {
+            return opt.type.get(key);
         }
         else {
             errors.push(createCompilerDiagnosticForInvalidCustomType(opt));
@@ -1183,7 +1183,7 @@ namespace ts {
                 removeWildcardFilesWithLowerPriorityExtension(file, wildcardFileMap, supportedExtensions, keyMapper);
 
                 const key = keyMapper(file);
-                if (!_has(literalFileMap, key) && !_has(wildcardFileMap, key)) {
+                if (!literalFileMap.has(key) && !wildcardFileMap.has(key)) {
                     _s(wildcardFileMap, key, file);
                 }
             }
@@ -1248,7 +1248,7 @@ namespace ts {
                 if (match) {
                     const key = useCaseSensitiveFileNames ? match[0] : match[0].toLowerCase();
                     const flags = watchRecursivePattern.test(name) ? WatchDirectoryFlags.Recursive : WatchDirectoryFlags.None;
-                    const existingFlags = _g(wildcardDirectories, key);
+                    const existingFlags = wildcardDirectories.get(key);
                     if (existingFlags === undefined || existingFlags < flags) {
                         _s(wildcardDirectories, key, flags);
                         if (flags === WatchDirectoryFlags.Recursive) {
@@ -1262,7 +1262,7 @@ namespace ts {
             _eachKey(wildcardDirectories, key => {
                 for (const recursiveKey of recursiveKeys) {
                     if (key !== recursiveKey && containsPath(recursiveKey, key, path, !useCaseSensitiveFileNames)) {
-                        _delete(wildcardDirectories, key);
+                        wildcardDirectories.delete(key);
                     }
                 }
             });
@@ -1285,7 +1285,7 @@ namespace ts {
         for (let i = ExtensionPriority.Highest; i < adjustedExtensionPriority; i++) {
             const higherPriorityExtension = extensions[i];
             const higherPriorityPath = keyMapper(changeExtension(file, higherPriorityExtension));
-            if (_has(literalFiles, higherPriorityPath) || _has(wildcardFiles, higherPriorityPath)) {
+            if (literalFiles.has(higherPriorityPath) || wildcardFiles.has(higherPriorityPath)) {
                 return true;
             }
         }
@@ -1307,7 +1307,7 @@ namespace ts {
         for (let i = nextExtensionPriority; i < extensions.length; i++) {
             const lowerPriorityExtension = extensions[i];
             const lowerPriorityPath = keyMapper(changeExtension(file, lowerPriorityExtension));
-            _delete(wildcardFiles, lowerPriorityPath);
+            wildcardFiles.delete(lowerPriorityPath);
         }
     }
 

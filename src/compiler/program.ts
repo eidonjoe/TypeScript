@@ -923,8 +923,8 @@ namespace ts {
             const hash = sys.createHash(data);
             const mtimeBefore = sys.getModifiedTime(fileName);
 
-            if (mtimeBefore && _has(outputFingerprints, fileName)) {
-                const fingerprint = _g(outputFingerprints, fileName);
+            if (mtimeBefore && outputFingerprints.has(fileName)) {
+                const fingerprint = outputFingerprints.get(fileName);
 
                 // If output has not been changed, and the file has no external modification
                 if (fingerprint.byteOrderMark === writeByteOrderMark &&
@@ -1062,8 +1062,8 @@ namespace ts {
         const resolutions: T[] = [];
         const cache = createMap<T>();
         for (const name of names) {
-            const result = _has(cache, name)
-                ? _g(cache, name)
+            const result = cache.has(name)
+                ? cache.get(name)
                 : _s(cache, name, loader(name, containingFile));
             resolutions.push(result);
         }
@@ -1416,7 +1416,7 @@ namespace ts {
                 getSourceFile: program.getSourceFile,
                 getSourceFileByPath: program.getSourceFileByPath,
                 getSourceFiles: program.getSourceFiles,
-                isSourceFileFromExternalLibrary: (file: SourceFile) => !!_g(sourceFilesFoundSearchingNodeModules, file.path),
+                isSourceFileFromExternalLibrary: (file: SourceFile) => !!sourceFilesFoundSearchingNodeModules.get(file.path),
                 writeFile: writeFileCallback || (
                     (fileName, data, writeByteOrderMark, onError, sourceFiles) => host.writeFile(fileName, data, writeByteOrderMark, onError, sourceFiles)),
                 isEmitBlocked,
@@ -1965,7 +1965,7 @@ namespace ts {
 
                 // If the file was previously found via a node_modules search, but is now being processed as a root file,
                 // then everything it sucks in may also be marked incorrectly, and needs to be checked again.
-                if (file && _g(sourceFilesFoundSearchingNodeModules, file.path) && currentNodeModulesDepth == 0) {
+                if (file && sourceFilesFoundSearchingNodeModules.get(file.path) && currentNodeModulesDepth == 0) {
                     _s(sourceFilesFoundSearchingNodeModules, file.path, false);
                     if (!options.noResolve) {
                         processReferencedFiles(file, getDirectoryPath(fileName), isDefaultLib);
@@ -1976,7 +1976,7 @@ namespace ts {
                     processImportedModules(file, getDirectoryPath(fileName));
                 }
                 // See if we need to reprocess the imports due to prior skipped imports
-                else if (file && _g(modulesWithElidedImports, file.path)) {
+                else if (file && modulesWithElidedImports.get(file.path)) {
                     if (currentNodeModulesDepth < maxNodeModulesJsDepth) {
                         _s(modulesWithElidedImports, file.path, false);
                         processImportedModules(file, getDirectoryPath(fileName));
@@ -2061,7 +2061,7 @@ namespace ts {
             refFile?: SourceFile, refPos?: number, refEnd?: number): void {
 
             // If we already found this library as a primary reference - nothing to do
-            const previousResolution = _g(resolvedTypeReferenceDirectives, typeReferenceDirective);
+            const previousResolution = resolvedTypeReferenceDirectives.get(typeReferenceDirective);
             if (previousResolution && previousResolution.primary) {
                 return;
             }

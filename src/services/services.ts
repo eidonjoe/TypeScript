@@ -1839,7 +1839,7 @@ namespace ts {
         function walk(node: Node) {
             switch (node.kind) {
                 case SyntaxKind.Identifier:
-                    _s(nameTable, (<Identifier>node).text, _g(nameTable, (<Identifier>node).text) === undefined ? node.pos : -1);
+                    _s(nameTable, (<Identifier>node).text, nameTable.get((<Identifier>node).text) === undefined ? node.pos : -1);
                     break;
                 case SyntaxKind.StringLiteral:
                 case SyntaxKind.NumericLiteral:
@@ -1852,7 +1852,7 @@ namespace ts {
                         isArgumentOfElementAccessExpression(node) ||
                         isLiteralComputedPropertyDeclarationName(node)) {
 
-                        _s(nameTable, (<LiteralExpression>node).text, _g(nameTable, (<LiteralExpression>node).text) === undefined ? node.pos : -1);
+                        _s(nameTable, (<LiteralExpression>node).text, nameTable.get((<LiteralExpression>node).text) === undefined ? node.pos : -1);
                     }
                     break;
                 default:

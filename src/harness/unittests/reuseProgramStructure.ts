@@ -106,7 +106,7 @@ namespace ts {
 
         return {
             getSourceFile(fileName): SourceFile {
-                return _g(files, fileName);
+                return files.get(fileName);
             },
             getDefaultLibFileName(): string {
                 return "lib.d.ts";
@@ -129,9 +129,9 @@ namespace ts {
             getNewLine(): string {
                 return sys ? sys.newLine : newLine;
             },
-            fileExists: fileName => _has(files, fileName),
+            fileExists: fileName => files.has(fileName),
             readFile: fileName => {
-                return _has(files, fileName) ? _g(files, fileName).text : undefined;
+                return files.has(fileName) ? files.get(fileName).text : undefined;
             }
         };
     }

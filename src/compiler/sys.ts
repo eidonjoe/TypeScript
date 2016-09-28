@@ -246,18 +246,18 @@ namespace ts {
 
                 function reduceDirWatcherRefCountForFile(fileName: string) {
                     const dirName = getDirectoryPath(fileName);
-                    const watcher = _g(dirWatchers, dirName);
+                    const watcher = dirWatchers.get(dirName);
                     if (watcher) {
                         watcher.referenceCount -= 1;
                         if (watcher.referenceCount <= 0) {
                             watcher.close();
-                            _delete(dirWatchers, dirName);
+                            dirWatchers.delete(dirName);
                         }
                     }
                 }
 
                 function addDirWatcher(dirPath: string): void {
-                    let watcher = _g(dirWatchers, dirPath);
+                    let watcher = dirWatchers.get(dirPath);
                     if (watcher) {
                         watcher.referenceCount += 1;
                         return;
@@ -299,9 +299,9 @@ namespace ts {
                         : ts.getNormalizedAbsolutePath(relativeFileName, baseDirPath);
                     // Some applications save a working file via rename operations
                     if ((eventName === "change" || eventName === "rename")) {
-                        const callbacks = _g(fileWatcherCallbacks, fileName);
+                        const callbacks = fileWatcherCallbacks.get(fileName);
                         if (callbacks) {
-                            for (const fileCallback of _g(fileWatcherCallbacks, fileName)) {
+                            for (const fileCallback of fileWatcherCallbacks.get(fileName)) {
                                 fileCallback(fileName);
                            }
                         }

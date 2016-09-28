@@ -103,11 +103,11 @@ namespace ts {
     }
 
     export function hasResolvedModule(sourceFile: SourceFile, moduleNameText: string): boolean {
-        return !!(sourceFile && sourceFile.resolvedModules && _g(sourceFile.resolvedModules, moduleNameText));
+        return !!(sourceFile && sourceFile.resolvedModules && sourceFile.resolvedModules.get(moduleNameText));
     }
 
     export function getResolvedModule(sourceFile: SourceFile, moduleNameText: string): ResolvedModule {
-        return hasResolvedModule(sourceFile, moduleNameText) ? _g(sourceFile.resolvedModules, moduleNameText) : undefined;
+        return hasResolvedModule(sourceFile, moduleNameText) ? sourceFile.resolvedModules.get(moduleNameText) : undefined;
     }
 
     export function setResolvedModule(sourceFile: SourceFile, moduleNameText: string, resolvedModule: ResolvedModule): void {
@@ -143,7 +143,7 @@ namespace ts {
         }
         for (let i = 0; i < names.length; i++) {
             const newResolution = newResolutions[i];
-            const oldResolution = oldResolutions && _g(oldResolutions, names[i]);
+            const oldResolution = oldResolutions && oldResolutions.get(names[i]);
             const changed =
                 oldResolution
                     ? !newResolution || !comparer(oldResolution, newResolution)
@@ -2237,11 +2237,11 @@ namespace ts {
         }
 
         function reattachFileDiagnostics(newFile: SourceFile): void {
-            if (!_has(fileDiagnostics, newFile.fileName)) {
+            if (!fileDiagnostics.has(newFile.fileName)) {
                 return;
             }
 
-            for (const diagnostic of _g(fileDiagnostics, newFile.fileName)) {
+            for (const diagnostic of fileDiagnostics.get(newFile.fileName)) {
                 diagnostic.file = newFile;
             }
         }
@@ -2249,7 +2249,7 @@ namespace ts {
         function add(diagnostic: Diagnostic): void {
             let diagnostics: Diagnostic[];
             if (diagnostic.file) {
-                diagnostics = _g(fileDiagnostics, diagnostic.file.fileName);
+                diagnostics = fileDiagnostics.get(diagnostic.file.fileName);
                 if (!diagnostics) {
                     diagnostics = [];
                     _s(fileDiagnostics, diagnostic.file.fileName, diagnostics);
@@ -2272,7 +2272,7 @@ namespace ts {
         function getDiagnostics(fileName?: string): Diagnostic[] {
             sortAndDeduplicate();
             if (fileName) {
-                return _g(fileDiagnostics, fileName) || [];
+                return fileDiagnostics.get(fileName) || [];
             }
 
             const allDiagnostics: Diagnostic[] = [];
@@ -2333,7 +2333,7 @@ namespace ts {
         return s;
 
         function getReplacement(c: string) {
-            return _g(escapedCharsMap, c) || get16BitUnicodeEscapeSequence(c.charCodeAt(0));
+            return escapedCharsMap.get(c) || get16BitUnicodeEscapeSequence(c.charCodeAt(0));
         }
     }
 

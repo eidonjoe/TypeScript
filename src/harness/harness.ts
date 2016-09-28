@@ -934,10 +934,10 @@ namespace Harness {
                 return undefined;
             }
 
-            if (!ts._g(libFileNameSourceFileMap, fileName)) {
+            if (!libFileNameSourceFileMap.get(fileName)) {
                 ts._s(libFileNameSourceFileMap, fileName, createSourceFileAndAssertInvariants(fileName, IO.readFile(libFolder + fileName), ts.ScriptTarget.Latest));
             }
-            return ts._g(libFileNameSourceFileMap, fileName);
+            return libFileNameSourceFileMap.get(fileName);
         }
 
         export function getDefaultLibFileName(options: ts.CompilerOptions): string {
@@ -1088,7 +1088,7 @@ namespace Harness {
                     ts._s(optionsIndex, option.name.toLowerCase(), option);
                 }
             }
-            return ts._g(optionsIndex, name.toLowerCase());
+            return optionsIndex.get(name.toLowerCase());
         }
 
         export function setCompilerOptionsFromHarnessSetting(settings: Harness.TestCaseParser.CompilerSettings, options: ts.CompilerOptions & HarnessOptions): void {
@@ -1495,7 +1495,7 @@ namespace Harness {
 
                 allFiles.forEach(file => {
                     const codeLines = file.content.split("\n");
-                    ts._g(typeWriterResults, file.unitName).forEach(result => {
+                    typeWriterResults.get(file.unitName).forEach(result => {
                         if (isSymbolBaseline && !result.symbol) {
                             return;
                         }

@@ -113,7 +113,7 @@ namespace ts {
         }
 
         function getBucketForCompilationSettings(key: DocumentRegistryBucketKey, createIfMissing: boolean): FileMap<DocumentRegistryEntry> {
-            let bucket = _g(buckets, key);
+            let bucket = buckets.get(key);
             if (!bucket && createIfMissing) {
                 _s(buckets, key, bucket = createFileMap<DocumentRegistryEntry>());
             }
@@ -122,7 +122,7 @@ namespace ts {
 
         function reportStats() {
             const bucketInfoArray = Object.keys(buckets).filter(name => name && name.charAt(0) === "_").map(name => {
-                const entries = _g(buckets, name);
+                const entries = buckets.get(name);
                 const sourceFiles: { name: string; refCount: number; references: string[]; }[] = [];
                 entries.forEachValue((key, entry) => {
                     sourceFiles.push({

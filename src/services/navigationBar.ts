@@ -241,7 +241,7 @@ namespace ts.NavigationBar {
                 return true;
             }
 
-            const itemsWithSameName = _g(nameToItems, name);
+            const itemsWithSameName = nameToItems.get(name);
             if (!itemsWithSameName) {
                 _s(nameToItems, name, child);
                 return true;

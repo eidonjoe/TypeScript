@@ -29,15 +29,15 @@ namespace ts {
                 },
                 fileExists: path => {
                     assert.isTrue(_setHas(directories, getDirectoryPath(path)), `'fileExists' '${path}' request in non-existing directory`);
-                    return _has(map, path);
+                    return map.has(path);
                 }
             };
         }
         else {
-            return { readFile, fileExists: path => _has(map, path) };
+            return { readFile, fileExists: path => map.has(path) };
         }
         function readFile(path: string): string {
-            return _has(map, path) ? _g(map, path).content : undefined;
+            return map.has(path) ? map.get(path).content : undefined;
         }
     }
 
@@ -287,7 +287,7 @@ namespace ts {
             const host: CompilerHost = {
                 getSourceFile: (fileName: string, languageVersion: ScriptTarget) => {
                     const path = normalizePath(combinePaths(currentDirectory, fileName));
-                    return _has(files, path) ? createSourceFile(fileName, _g(files, path), languageVersion) : undefined;
+                    return files.has(path) ? createSourceFile(fileName, files.get(path), languageVersion) : undefined;
                 },
                 getDefaultLibFileName: () => "lib.d.ts",
                 writeFile: (fileName, content): void => { throw new Error("NotImplemented"); },
@@ -298,7 +298,7 @@ namespace ts {
                 useCaseSensitiveFileNames: () => false,
                 fileExists: fileName => {
                     const path = normalizePath(combinePaths(currentDirectory, fileName));
-                    return _has(files, path);
+                    return files.has(path);
                 },
                 readFile: (fileName): string => { throw new Error("NotImplemented"); }
             };
@@ -368,7 +368,7 @@ export = C;
                         return library;
                     }
                     const path = getCanonicalFileName(normalizePath(combinePaths(currentDirectory, fileName)));
-                    return _has(files, path) ? createSourceFile(fileName, _g(files, path), languageVersion) : undefined;
+                    return files.has(path) ? createSourceFile(fileName, files.get(path), languageVersion) : undefined;
                 },
                 getDefaultLibFileName: () => "lib.d.ts",
                 writeFile: (fileName, content): void => { throw new Error("NotImplemented"); },
@@ -379,7 +379,7 @@ export = C;
                 useCaseSensitiveFileNames: () => useCaseSensitiveFileNames,
                 fileExists: fileName => {
                     const path = getCanonicalFileName(normalizePath(combinePaths(currentDirectory, fileName)));
-                    return _has(files, path);
+                    return files.has(path);
                 },
                 readFile: (fileName): string => { throw new Error("NotImplemented"); }
             };
@@ -1020,8 +1020,8 @@ import b = require("./moduleB");
             const names = map(files, f => f.name);
             const sourceFiles = arrayToMap(map(files, f => createSourceFile(f.name, f.content, ScriptTarget.ES6)), f => f.fileName);
             const compilerHost: CompilerHost = {
-                fileExists : fileName => _has(sourceFiles, fileName),
-                getSourceFile: fileName => _g(sourceFiles, fileName),
+                fileExists : fileName => sourceFiles.has(fileName),
+                getSourceFile: fileName => sourceFiles.get(fileName),
                 getDefaultLibFileName: () => "lib.d.ts",
                 writeFile(file, text) {
                     throw new Error("NYI");
@@ -1031,7 +1031,7 @@ import b = require("./moduleB");
                 getCanonicalFileName: f => f.toLowerCase(),
                 getNewLine: () => "\r\n",
                 useCaseSensitiveFileNames: () => false,
-                readFile: fileName => _has(sourceFiles, fileName) ? _g(sourceFiles, fileName).text : undefined
+                readFile: fileName => sourceFiles.has(fileName) ? sourceFiles.get(fileName).text : undefined
             };
             const program1 = createProgram(names, {}, compilerHost);
             const diagnostics1 = program1.getFileProcessingDiagnostics().getDiagnostics();

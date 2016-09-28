@@ -109,7 +109,7 @@ namespace FourSlash {
     });
 
     export function escapeXmlAttributeValue(s: string) {
-        return s.replace(/[&<>"'\/]/g, ch => ts._g(entityMap, ch));
+        return s.replace(/[&<>"'\/]/g, ch => entityMap.get(ch));
     }
 
     // Name of testcase metadata including ts.CompilerOptions properties that will be used by globalOptions
@@ -241,7 +241,7 @@ namespace FourSlash {
             }
 
             function tryAdd(path: string) {
-                const inputFile = ts._g(inputFiles, path);
+                const inputFile = inputFiles.get(path);
                 if (inputFile && !Harness.isDefaultLibraryFile(path)) {
                     languageServiceAdapterHost.addScript(path, inputFile, /*isRootFile*/ true);
                     return true;
@@ -699,11 +699,11 @@ namespace FourSlash {
             const completions = this.getCompletionListAtCaret();
             const uniqueItems = ts.createMap<string>();
             for (const item of completions.entries) {
-                if (!ts._has(uniqueItems, item.name)) {
+                if (!uniqueItems.has(item.name)) {
                     ts._s(uniqueItems, item.name, item.kind);
                 }
                 else {
-                    assert.equal(item.kind, ts._g(uniqueItems, item.name), `Items should have the same kind, got ${item.kind} and ${ts._g(uniqueItems, item.name)}`);
+                    assert.equal(item.kind, uniqueItems.get(item.name), `Items should have the same kind, got ${item.kind} and ${uniqueItems.get(item.name)}`);
                 }
             }
         }
@@ -2083,7 +2083,7 @@ namespace FourSlash {
                 "<": ts.CharacterCodes.lessThan
             });
 
-            const charCode = ts._g(openBraceMap, openingBrace);
+            const charCode = openBraceMap.get(openingBrace);
 
             if (!charCode) {
                 this.raiseError(`Invalid openingBrace '${openingBrace}' specified.`);

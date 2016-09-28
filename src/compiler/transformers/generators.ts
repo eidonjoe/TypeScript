@@ -1908,7 +1908,7 @@ namespace ts {
                 if (isIdentifier(original) && original.parent) {
                     const declaration = resolver.getReferencedValueDeclaration(original);
                     if (declaration) {
-                        const name = _g(renamedCatchVariableDeclarations, String(getOriginalNodeId(declaration)));
+                        const name = renamedCatchVariableDeclarations.get(String(getOriginalNodeId(declaration)));
                         if (name) {
                             const clone = getMutableClone(name);
                             setSourceMapRange(clone, node);

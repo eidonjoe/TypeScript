@@ -24,7 +24,7 @@ namespace ts {
             write: (s: string) => {
             },
             readFile: (path: string, encoding?: string): string => {
-                return _has(fileMap, path) ? _g(fileMap, path).content : undefined;
+                return fileMap.has(path) ? fileMap.get(path).content : undefined;
             },
             writeFile: (path: string, data: string, writeByteOrderMark?: boolean) => {
                 throw new Error("NYI");
@@ -33,7 +33,7 @@ namespace ts {
                 throw new Error("NYI");
             },
             fileExists: (path: string): boolean => {
-                return _has(fileMap, path);
+                return fileMap.has(path);
             },
             directoryExists: (path: string): boolean => {
                 return _setHas(existingDirectories, path);

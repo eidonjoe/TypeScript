@@ -136,9 +136,9 @@ namespace ts.server {
 
             for (const name of names) {
                 // check if this is a duplicate entry in the list
-                let resolution = _g(newResolutions, name);
+                let resolution = newResolutions.get(name);
                 if (!resolution) {
-                    const existingResolution = currentResolutionsInFile && _g(currentResolutionsInFile, name);
+                    const existingResolution = currentResolutionsInFile && currentResolutionsInFile.get(name);
                     if (moduleResolutionIsValid(existingResolution)) {
                         // ok, it is safe to use existing name resolution results
                         resolution = existingResolution;
@@ -469,7 +469,7 @@ namespace ts.server {
                 return undefined;
             }
 
-            return _g(this.filenameToSourceFile, info.fileName);
+            return this.filenameToSourceFile.get(info.fileName);
         }
 
         getSourceFileFromName(filename: string, requireOpen?: boolean) {
@@ -642,7 +642,7 @@ namespace ts.server {
 
         getFormatCodeOptions(file?: string) {
             if (file) {
-                const info = _g(this.filenameToScriptInfo, file);
+                const info = this.filenameToScriptInfo.get(file);
                 if (info) {
                     return info.formatCodeOptions;
                 }
@@ -651,7 +651,7 @@ namespace ts.server {
         }
 
         watchedFileChanged(fileName: string) {
-            const info = _g(this.filenameToScriptInfo, fileName);
+            const info = this.filenameToScriptInfo.get(fileName);
             if (!info) {
                 this.psLogger.info("Error: got watch notification for unknown file: " + fileName);
             }
@@ -685,8 +685,8 @@ namespace ts.server {
         }
 
         startTimerForDetectingProjectFileListChanges(project: Project) {
-            if (_g(this.timerForDetectingProjectFileListChanges, project.projectFilename)) {
-                this.host.clearTimeout(_g(this.timerForDetectingProjectFileListChanges, project.projectFilename));
+            if (this.timerForDetectingProjectFileListChanges.get(project.projectFilename)) {
+                this.host.clearTimeout(this.timerForDetectingProjectFileListChanges.get(project.projectFilename));
             }
             _s(this.timerForDetectingProjectFileListChanges, project.projectFilename, this.host.setTimeout(
                 () => this.handleProjectFileListChanges(project),
@@ -774,7 +774,7 @@ namespace ts.server {
 
         setHostConfiguration(args: ts.server.protocol.ConfigureRequestArguments) {
             if (args.file) {
-                const info = _g(this.filenameToScriptInfo, args.file);
+                const info = this.filenameToScriptInfo.get(args.file);
                 if (info) {
                     info.setFormatOptions(args.formatOptions);
                     this.log("Host configuration update for file " + args.file, "Info");
@@ -803,7 +803,7 @@ namespace ts.server {
             let currentPath = ts.getDirectoryPath(root.fileName);
             let parentPath = ts.getDirectoryPath(currentPath);
             while (currentPath != parentPath) {
-                if (!_g(project.projectService.directoryWatchersForTsconfig, currentPath)) {
+                if (!project.projectService.directoryWatchersForTsconfig.get(currentPath)) {
                     this.log("Add watcher for: " + currentPath);
                     _s(project.projectService.directoryWatchersForTsconfig, currentPath,
                         this.host.watchDirectory(currentPath, fileName => this.directoryWatchedForTsconfigChanged(fileName)));
@@ -879,10 +879,10 @@ namespace ts.server {
                 for (const directory of project.directoriesWatchedForTsconfig) {
                     // if the ref count for this directory watcher drops to 0, it's time to close it
                     _mod(project.projectService.directoryWatchersRefCount, directory, refCount => refCount - 1);
-                    if (!_g(project.projectService.directoryWatchersRefCount, directory)) {
+                    if (!project.projectService.directoryWatchersRefCount.get(directory)) {
                         this.log("Close directory watcher for: " + directory);
-                        _g(project.projectService.directoryWatchersForTsconfig, directory).close();
-                        _delete(project.projectService.directoryWatchersForTsconfig, directory);
+                        project.projectService.directoryWatchersForTsconfig.get(directory).close();
+                        project.projectService.directoryWatchersForTsconfig.delete(directory);
                     }
                 }
                 unorderedRemoveItem(this.inferredProjects, project);
@@ -1138,7 +1138,7 @@ namespace ts.server {
 
         getScriptInfo(filename: string) {
             filename = ts.normalizePath(filename);
-            return _g(this.filenameToScriptInfo, filename);
+            return this.filenameToScriptInfo.get(filename);
         }
 
         /**
@@ -1147,7 +1147,7 @@ namespace ts.server {
          */
         openFile(fileName: string, openedByClient: boolean, fileContent?: string, scriptKind?: ScriptKind) {
             fileName = ts.normalizePath(fileName);
-            let info = _g(this.filenameToScriptInfo, fileName);
+            let info = this.filenameToScriptInfo.get(fileName);
             if (!info) {
                 let content: string;
                 if (this.host.fileExists(fileName)) {
@@ -1261,7 +1261,7 @@ namespace ts.server {
          * @param filename is absolute pathname
          */
         closeClientFile(filename: string) {
-            const info = _g(this.filenameToScriptInfo, filename);
+            const info = this.filenameToScriptInfo.get(filename);
             if (info) {
                 this.closeOpenFile(info);
                 info.isOpen = false;
@@ -1270,14 +1270,14 @@ namespace ts.server {
         }
 
         getProjectForFile(filename: string) {
-            const scriptInfo = _g(this.filenameToScriptInfo, filename);
+            const scriptInfo = this.filenameToScriptInfo.get(filename);
             if (scriptInfo) {
                 return scriptInfo.defaultProject;
             }
         }
 
         printProjectsForFile(filename: string) {
-            const scriptInfo = _g(this.filenameToScriptInfo, filename);
+            const scriptInfo = this.filenameToScriptInfo.get(filename);
             if (scriptInfo) {
                 this.psLogger.startGroup();
                 this.psLogger.info("Projects for " + filename);

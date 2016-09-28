@@ -37,7 +37,7 @@ namespace ts {
 
         // path should already be well-formed so it does not need to be normalized
         function get(path: Path): T {
-            return _g(files, toKey(path));
+            return files.get(toKey(path));
         }
 
         function set(path: Path, value: T) {
@@ -45,12 +45,12 @@ namespace ts {
         }
 
         function contains(path: Path) {
-            return _has(files, toKey(path));
+            return files.has(toKey(path));
         }
 
         function remove(path: Path) {
             const key = toKey(path);
-            _delete(files, key);
+            files.delete(key);
         }
 
         function clear() {
@@ -577,7 +577,7 @@ namespace ts {
     export let localizedDiagnosticMessages: Map<string> = undefined;
 
     export function getLocaleSpecificMessage(message: DiagnosticMessage) {
-        return localizedDiagnosticMessages && _g(localizedDiagnosticMessages, message.key) || message.message;
+        return localizedDiagnosticMessages && localizedDiagnosticMessages.get(message.key) || message.message;
     }
 
     export function createFileDiagnostic(file: SourceFile, start: number, length: number, message: DiagnosticMessage, ...args: any[]): Diagnostic;

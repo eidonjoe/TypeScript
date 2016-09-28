@@ -89,14 +89,14 @@ namespace ts.JsTyping {
 
         // Add the cached typing locations for inferred typings that are already installed
         _each(packageNameToTypingLocation, (name, typingLocation) => {
-            if (_has(inferredTypings, name) && !_g(inferredTypings, name)) {
+            if (inferredTypings.has(name) && !inferredTypings.get(name)) {
                 _s(inferredTypings, name, typingLocation);
             }
         });
 
         // Remove typings that the user has added to the exclude list
         for (const excludeTypingName of exclude) {
-            _delete(inferredTypings, excludeTypingName);
+            inferredTypings.delete(excludeTypingName);
         }
 
         const newTypingNames: string[] = [];
@@ -121,7 +121,7 @@ namespace ts.JsTyping {
             }
 
             for (const typing of typingNames) {
-                if (!_has(inferredTypings, typing)) {
+                if (!inferredTypings.has(typing)) {
                     _s(inferredTypings, typing, undefined);
                 }
             }
@@ -164,7 +164,7 @@ namespace ts.JsTyping {
                 mergeTypings(cleanedTypingNames);
             }
             else {
-                mergeTypings(filter(cleanedTypingNames, f => _has(safeList, f)));
+                mergeTypings(filter(cleanedTypingNames, f => safeList.has(f)));
             }
 
             const hasJsxFile = forEach(fileNames, f => scriptKindIs(f, /*LanguageServiceHost*/ undefined, ScriptKind.JSX));

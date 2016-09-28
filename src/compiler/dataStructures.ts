@@ -12,7 +12,16 @@ namespace ts {
     //Note: we shouldn't have publicly exported members of the Map type. Use MapLike instead in those situations.
     export interface Map<T> {
         // Ensure that Map<string> and Map<number> are incompatible
-        __mapBrand: T;
+        //__mapBrand: T;
+
+        clear(): void;
+        delete(key: string): boolean;
+        get(key: string): T;
+        //TODO: many calls to _has could be replaced by calling '_get' and checking the result
+        has(key: string): boolean;
+        set(key: string, value: T): void;
+
+        forEach(f: (value: T, key: string) => void): void;
     }
 }
 
@@ -39,7 +48,7 @@ namespace ts {
 /* @internal */
 //map implementation
 namespace ts {
-    export interface Iterator<T> {
+    export interface Iterator<T> { //TODO: don't export
         next(): { value: T, done: boolean }; //TODO: LKG updated, so use { value: T, done: false } | { value: never, done: true }
     }
 
@@ -56,6 +65,40 @@ namespace ts {
 
         //kill?
         forEach(f: (value: T, key: string) => void): void;
+    }
+
+    class ShimMap<T> {
+        private data: { [key: string]: T };
+
+        constructor() {
+            this.data = createDictionaryModeObject();
+        }
+
+        clear() {
+            this.data = createDictionaryModeObject();
+        }
+
+        delete(key: string) {
+            delete this.data[key];
+        }
+
+        get(key: string) {
+            return this.data[key];
+        }
+
+        has(key: string) {
+            return key in this.data;
+        }
+
+        set(key: string, value: T) {
+            this.data[key] = value;
+        }
+
+        forEach(f: (value: T, key: string) => void) {
+            for (const key in this.data) {
+                f(this.data[key], key);
+            }
+        }
     }
 
     declare const Map: { new<T>(): NativeMap<T> } | undefined;
@@ -99,9 +142,9 @@ namespace ts {
         return map;
     }
 
-    export const _g: <T>(map: Map<T>, key: string) => T = realMaps
-        ? <T>(map: NativeMap<T>, key: string) => map.get(key)
-        : <T>(map: MapLike<T>, key: string) => map[key];
+    //export const _g: <T>(map: Map<T>, key: string) => T = realMaps
+    //    ? <T>(map: NativeMap<T>, key: string) => map.get(key)
+    //    : <T>(map: MapLike<T>, key: string) => map[key];
 
     export const _s: <T>(map: Map<T>, key: string, value: T) => T = realMaps
         ? <T>(map: NativeMap<T>, key: string, value: T) => {
@@ -110,18 +153,17 @@ namespace ts {
         }
         : <T>(map: MapLike<T>, key: string, value: T) => map[key] = value;
 
-    //TODO: many calls to _has could be replaced by calling '_get' and checking the result
-    export const _has: (map: Map<any>, key: string) => boolean = realMaps
-        ? (map: NativeMap<any>, key: string) => map.has(key)
-        : (map: MapLike<any>, key: string) => key in map;
+    //export const _has: (map: Map<any>, key: string) => boolean = realMaps
+    //    ? (map: NativeMap<any>, key: string) => map.has(key)
+    //    : (map: MapLike<any>, key: string) => key in map;
 
-    export const _delete: (map: Map<any>, key: string) => void = realMaps
-        ? (map: NativeMap<any>, key: string) => {
-            map.delete(key);
-        }
-        : (map: MapLike<any>, key: string) => {
-            delete map[key];
-        };
+    //export const _delete: (map: Map<any>, key: string) => void = realMaps
+    //    ? (map: NativeMap<any>, key: string) => {
+    //        map.delete(key);
+    //    }
+    //    : (map: MapLike<any>, key: string) => {
+    //       delete map[key];
+    //    };
 
     export const _each: <T>(map: Map<T>, f: (key: string, value: T) => void) => void = realMaps
         ? <T>(map: NativeMap<T>, f: (key: string, value: T) => void) => {
@@ -337,20 +379,20 @@ namespace ts {
 
     //Use a NumberMap type instead
     export function _deleteWakka(map: Map<any>, key: any): void {
-        _delete(map, key.toString());
+        map.delete(key.toString());
     }
     export function _hasWakka(map: Map<any>, key: any): boolean {
-        return _has(map, key.toString());
+        return map.has(key.toString());
     }
     export function _getWakka<T>(map: Map<T>, key: any): T {
-        return _g(map, key.toString());
+        return map.get(key.toString());
     }
     export function _setWakka<T>(map: Map<T>, key: any, value: T): T {
         return _s(map, key.toString(), value);
     }
 
     export function _mod<T>(map: Map<T>, key: string, modifier: (value: T) => T) {
-        _s(map, key, modifier(_g(map, key)));
+        _s(map, key, modifier(map.get(key)));
     }
 
     export function cloneMap<T>(map: Map<T>) {
@@ -411,7 +453,7 @@ namespace ts {
     }
 
     export function _getOrUpdate<T>(map: Map<T>, key: string, getValue: (key: string) => T): T {
-        return _has(map, key) ? _g(map, key) : _s(map, key, getValue(key));
+        return map.has(key) ? map.get(key) : _s(map, key, getValue(key));
     }
 
     /**
@@ -439,7 +481,7 @@ namespace ts {
      * Creates the array if it does not already exist.
      */
     export function multiMapAdd<V>(map: Map<V[]>, key: string, value: V): V[] {
-        const values = _g(map, key);
+        const values = map.get(key);
         if (values) {
             values.push(value);
             return values;
@@ -455,11 +497,11 @@ namespace ts {
      * Does nothing if `key` is not in `map`, or `value` is not in `map[key]`.
      */
     export function multiMapRemove<V>(map: Map<V[]>, key: string, value: V): void {
-        const values = _g(map, key);
+        const values = map.get(key);
         if (values) {
             unorderedRemoveItem(values, value);
             if (!values.length) {
-                _delete(map, key);
+                map.delete(key);
             }
         }
     }
@@ -469,12 +511,12 @@ namespace ts {
         if (left === right) return true;
         if (!left || !right) return false;
         const someInLeftHasNoMatch = _someEntry(left, (leftKey, leftValue) => {
-            if (!_has(right, leftKey)) return true;
-            const rightValue = _g(right, leftKey);
+            if (!right.has(leftKey)) return true;
+            const rightValue = right.get(leftKey);
             return !(equalityComparer ? equalityComparer(leftValue, rightValue) : leftValue === rightValue);
         });
         if (someInLeftHasNoMatch) return false;
-        const someInRightHasNoMatch = _someKey(right, rightKey => !_has(left, rightKey));
+        const someInRightHasNoMatch = _someKey(right, rightKey => !left.has(rightKey));
         return !someInRightHasNoMatch;
     }
 }

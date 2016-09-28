@@ -535,14 +535,14 @@ namespace ts {
         // do not need to keep track of created temp names.
         function getExportDefaultTempVariableName(): string {
             const baseName = "_default";
-            if (!_has(currentIdentifiers, baseName)) {
+            if (!currentIdentifiers.has(baseName)) {
                 return baseName;
             }
             let count = 0;
             while (true) {
                 count++;
                 const name = baseName + "_" + count;
-                if (!_has(currentIdentifiers, name)) {
+                if (!currentIdentifiers.has(name)) {
                     return name;
                 }
             }

@@ -2703,15 +2703,15 @@ const _super = (function (geti, seti) {
 
         function isUniqueName(name: string): boolean {
             return !resolver.hasGlobalName(name) &&
-                !_has(currentFileIdentifiers, name) &&
+                !currentFileIdentifiers.has(name) &&
                 !_setHas(generatedNameSet, name);
         }
 
         function isUniqueLocalName(name: string, container: Node): boolean {
             for (let node = container; isNodeDescendantOf(node, container); node = node.nextContainer) {
-                if (node.locals && _has(node.locals, name)) {
+                if (node.locals && node.locals.has(name)) {
                     // We conservatively include alias symbols to cover cases where they're emitted as locals
-                    if (_g(node.locals, name).flags & (SymbolFlags.Value | SymbolFlags.ExportValue | SymbolFlags.Alias)) {
+                    if (node.locals.get(name).flags & (SymbolFlags.Value | SymbolFlags.ExportValue | SymbolFlags.Alias)) {
                         return false;
                     }
                 }

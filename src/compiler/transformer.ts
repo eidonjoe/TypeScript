@@ -431,7 +431,7 @@ namespace ts {
             let range: TextRange;
             let current = node;
             while (current) {
-                range = current.id ? _g(tokenSourceMapRanges, current.id + "-" + token) : undefined;
+                range = current.id ? tokenSourceMapRanges.get(current.id + "-" + token) : undefined;
                 if (range !== undefined) {
                     break;
                 }
