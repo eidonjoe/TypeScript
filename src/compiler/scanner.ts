@@ -56,7 +56,7 @@ namespace ts {
         tryScan<T>(callback: () => T): T;
     }
 
-    const textToToken = createMapFromMapLike({
+    const textToToken = mapOfMapLike({
         "abstract": SyntaxKind.AbstractKeyword,
         "any": SyntaxKind.AnyKeyword,
         "as": SyntaxKind.AsKeyword,

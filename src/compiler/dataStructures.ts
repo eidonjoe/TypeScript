@@ -1,13 +1,27 @@
-//TODO: move this back to types.ts
+//should be internal
 namespace ts {
-    export interface MapLike<T> {
-        [index: string]: T;
+    /**
+     * Map from numeric keys to values.
+     * Usually this is the builtin Map class.
+     * In runtimes without Maps, this is implemented using a sparse array.
+     */
+    export interface NumberMap<K extends number, V> {
+        delete(key: K): void;
+        get(key: K): V;
+        has(key: K): boolean; //check if ever used
+        set(key: K, value: V): void;
+
+        //Ever used?
+        forEach(action: (value: V, key: K) => void): void;
     }
 
     /**
      * Represents a mapping from string keys to values.
-     * This is an abstract data type: only functions in dataStructures.ts should use the internal representation of Maps.
-     * The internal representation depends on whether the native Map class is available.
+     * Usually this is the builtin Map class.
+     * In runtimes without Maps, this is implemented using an object in dictionary mode.
+     *
+     * Internet Explorer does not support iterator-returning methods, so those are not allowed here.
+     * But map-using functions in dataStructures.ts check for these features and use them where possible.
      */
     //Note: we shouldn't have publicly exported members of the StringMap type. Use MapLike instead in those situations.
     export interface StringMap<T> {
@@ -21,51 +35,36 @@ namespace ts {
         forEach(action: (value: T, key: string) => void): void;
     }
 
-
-    export interface NumberMap<K extends number, V> {
-        delete(key: K): void;
-        get(key: K): V;
-        has(key: K): boolean; //check if ever used
-        set(key: K, value: V): void;
-
-        //Ever used?
-        forEach(action: (value: V, key: K) => void): void;
+    /** Represents a set of strings.
+     * Usually this is the builtin Set class.
+     * In runtimes without Sets, this is implemented using a StringMap with dummy values.
+     */
+    export interface StringSet {
+        add(value: string): void;
+        has(value: string): boolean;
+        delete(value: string): void;
+        forEach(action: (value: string) => void): void;
     }
 }
 
-//sort me
+//NumberMap and StringMap internal implementation
 /* @internal */
 namespace ts {
-    //document
-    export function sortInV8ObjectInsertionOrder<T>(values: T[], toKey: (t: T) => string): T[] {
-        const naturals: T[] = []; //name
-        const everythingElse: T[] = [];
-        for (const value of values) {
-            // "0" looks like a natural but "08" doesn't.
-            const looksLikeNatural = /^(0|([1-9]\d*))$/.test(toKey(value));
-            (looksLikeNatural ? naturals : everythingElse).push(value);
-        }
-        function toInt(value: T): number {
-            return parseInt(toKey(value), 10);
-        }
-        naturals.sort((a, b) => toInt(a) - toInt(b));
-        return naturals.concat(everythingElse);
+    // The global Map object. This may not be available, so we must test for it.
+    declare const Map: NumberMapStatic & StringMapStatic | undefined;
+    const usingNativeMaps = typeof Map !== "undefined";
+
+    export interface NumberMapStatic {
+        /**
+         * Creates a new NumberMap.
+         * If `pairs` is provided, each [key, value] pair will be added to the map.
+         */
+        new<K extends number, V>(pairs?: [K, V][]): NumberMap<K, V>
     }
-}
-
-//numbermap
-/* @internal */
-namespace ts {
-    //duplicate code
-    declare const Map: { new<K extends number, V>(): NumberMap<K, V> } | undefined;
-    const usingNativeMaps = typeof Map !== "undefined"; //test shim
-
-    //review
-    export const NumberMap: { new<K extends number, V>(pairs?: [K, V][]): NumberMap<K, V> } = usingNativeMaps ? Map : class ShimNumberMap<K extends number, V> implements NumberMap<K, V> {
-        private data: V[]; // Sparse aray
+    export const NumberMap: NumberMapStatic = usingNativeMaps ? Map : class ShimNumberMap<K extends number, V> implements NumberMap<K, V> {
+        private data: { [key: number]: V } = {}; //todo: use `[]` instead
 
         constructor(pairs?: [K, V][]) {
-            this.data = [];
             if (pairs) {
                 for (const [key, value] of pairs) {
                     this.data[key as number] = value;
@@ -96,17 +95,12 @@ namespace ts {
             }
         }
     }
-}
 
-/* @internal */
-//map implementation
-namespace ts {
+
+
     interface Iterator<T> {
         next(): { value: T, done: false } | { value: never, done: true }
     }
-
-    declare const Map: { new<T>(): StringMap<T> } | undefined;
-    const usingNativeMaps = typeof Map !== "undefined";
 
     /** Completes the full ES6 Map spec. Internet Explorer does not provide these methods, so we must provide fallbacks. */
     interface FullyFeaturedMap<T> extends StringMap<T> {
@@ -116,12 +110,13 @@ namespace ts {
     }
     const fullyFeaturedMaps = usingNativeMaps && "keys" in Map.prototype && "values" in Map.prototype && "entries" in Map.prototype
 
-    export const StringMap: { new<T>(): StringMap<T> } = usingNativeMaps ? Map : class ShimMap<T> implements StringMap<T> {
-        private data: { [key: string]: T };
+    export interface StringMapStatic {
+        new<T>(): StringMap<T>
+    }
+    export const StringMap: StringMapStatic = usingNativeMaps ? Map : class ShimStringMap<T> implements StringMap<T> {
+        private data: { [key: string]: T } = createDictionaryModeObject();
 
-        constructor() {
-            this.data = createDictionaryModeObject();
-        }
+        constructor() {}
 
         clear() {
             this.data = createDictionaryModeObject();
@@ -150,7 +145,7 @@ namespace ts {
         }
     };
 
-    //TODO: just use `new StringMap([[key, value]])?
+    //doc
     export function createMapWithEntry<T>(key: string, value: T): StringMap<T> {
         const map = new StringMap<T>();
         map.set(key, value);
@@ -202,9 +197,9 @@ namespace ts {
             return result;
         }
 
-    export const _someEntry: <T>(map: StringMap<T>, predicate: (key: string, value: T) => boolean) => boolean = fullyFeaturedMaps
+    export const someInMap: <T>(map: StringMap<T>, predicate: (key: string, value: T) => boolean) => boolean = fullyFeaturedMaps
         ? <T>(map: FullyFeaturedMap<T>, predicate: (key: string, value: T) => boolean) =>
-            someIter(map.entries(), ([key, value]) => predicate(key, value))
+            someInIterator(map.entries(), ([key, value]) => predicate(key, value))
         : <T>(map: StringMap<T>, predicate: (key: string, value: T) => boolean) => {
             let found = false;
             map.forEach((value, key) => {
@@ -213,21 +208,20 @@ namespace ts {
             return found;
         };
 
-    export const _eachAndBreakIfReturningTrue: <T>(map: StringMap<T>, action: (key: string, value: T) => boolean) => void = _someEntry;
+    export const _eachAndBreakIfReturningTrue: <T>(map: StringMap<T>, action: (key: string, value: T) => boolean) => void = someInMap;
 
-    export const _someKey: (map: StringMap<any>, predicate: (key: string) => boolean) => boolean = fullyFeaturedMaps
-        ? (map: FullyFeaturedMap<any>, predicate: (key: string) => boolean) => someIter(map.keys(), predicate)
-        : _someEntry;
+    export const someKeyInMap: (map: StringMap<any>, predicate: (key: string) => boolean) => boolean = fullyFeaturedMaps
+        ? (map: FullyFeaturedMap<any>, predicate: (key: string) => boolean) => someInIterator(map.keys(), predicate)
+        : someInMap;
 
     //only used in one place, kill? Write in terms of _someEntry?
     export const someValueInMap: <T>(map: StringMap<T>, predicate: (value: T) => boolean) => boolean = fullyFeaturedMaps
         ? <T>(map: FullyFeaturedMap<T>, predicate: (value: T) => boolean) =>
-            someIter(map.values(), predicate)
+            someInIterator(map.values(), predicate)
         : <T>(map: StringMap<T>, predicate: (value: T) => boolean) =>
-            _someEntry(map, (key, value) => predicate(value));
+            someInMap(map, (key, value) => predicate(value));
 
-    //name
-    function someIter<T>(iter: Iterator<T>, predicate: (value: T) => boolean): boolean {
+    function someInIterator<T>(iter: Iterator<T>, predicate: (value: T) => boolean): boolean {
         while (true) {
             const { value, done } = iter.next();
             if (done) {
@@ -259,26 +253,42 @@ namespace ts {
 //Map extensions: don't depend on internal details
 /* @internal */
 namespace ts {
-    export function createMapFromMapLike<T>(template: MapLike<T>) {
+    //document
+    export function sortInV8ObjectInsertionOrder<T>(values: T[], toKey: (t: T) => string): T[] {
+        const naturals: T[] = []; //name
+        const everythingElse: T[] = [];
+        for (const value of values) {
+            // "0" looks like a natural but "08" doesn't.
+            const looksLikeNatural = /^(0|([1-9]\d*))$/.test(toKey(value));
+            (looksLikeNatural ? naturals : everythingElse).push(value);
+        }
+        function toInt(value: T): number {
+            return parseInt(toKey(value), 10);
+        }
+        naturals.sort((a, b) => toInt(a) - toInt(b));
+        return naturals.concat(everythingElse);
+    }
+
+    export function mapIsEmpty(map: StringMap<any>): boolean {
+        return !someKeyInMap(map, () => true);
+    }
+
+    export function mapOfMapLike<T>(object: MapLike<T>) {
         const map = new StringMap<T>();
         // Copies keys/values from template. Note that for..in will not throw if
         // template is undefined, and instead will just exit the loop.
-        for (const key in template) if (hasProperty(template, key)) {
-            map.set(key, template[key]);
+        for (const key in object) if (hasProperty(object, key)) {
+            map.set(key, object[key]);
         }
         return map;
     }
 
-    export function _toMapLike<T>(map: StringMap<T>): MapLike<T> {
+    export function mapLikeOfMap<T>(map: StringMap<T>): MapLike<T> {
         const obj = createDictionaryModeObject();
         map.forEach((value, key) => {
             obj[key] = value;
         });
         return obj;
-    }
-
-    export function isEmpty<T>(map: StringMap<T>): boolean {
-        return !_someKey(map, () => true);
     }
 
     export function _mod<T>(map: StringMap<T>, key: string, modifier: (value: T) => T) {
@@ -400,13 +410,13 @@ namespace ts {
     export function _equalMaps<T>(left: StringMap<T>, right: StringMap<T>, equalityComparer?: (left: T, right: T) => boolean) {
         if (left === right) return true;
         if (!left || !right) return false;
-        const someInLeftHasNoMatch = _someEntry(left, (leftKey, leftValue) => {
+        const someInLeftHasNoMatch = someInMap(left, (leftKey, leftValue) => {
             if (!right.has(leftKey)) return true;
             const rightValue = right.get(leftKey);
             return !(equalityComparer ? equalityComparer(leftValue, rightValue) : leftValue === rightValue);
         });
         if (someInLeftHasNoMatch) return false;
-        const someInRightHasNoMatch = _someKey(right, rightKey => !left.has(rightKey));
+        const someInRightHasNoMatch = someKeyInMap(right, rightKey => !left.has(rightKey));
         return !someInRightHasNoMatch;
     }
 }
@@ -414,13 +424,6 @@ namespace ts {
 
 /* @internal */
 namespace ts {
-    export interface StringSet {
-        add(value: string): void;
-        has(value: string): boolean;
-        delete(value: string): void;
-        forEach(action: (value: string) => void): void;
-    }
-
     class ShimStringSet implements StringSet {
         private data: { [value: string]: true };
 

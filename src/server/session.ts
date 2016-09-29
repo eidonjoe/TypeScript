@@ -1100,7 +1100,7 @@ namespace ts.server {
             return { response, responseRequired: true };
         }
 
-        private handlers = createMapFromMapLike<(request: protocol.Request) => { response?: any, responseRequired?: boolean }>({
+        private handlers = mapOfMapLike<(request: protocol.Request) => { response?: any, responseRequired?: boolean }>({
             [CommandNames.Exit]: () => {
                 this.exit();
                 return { responseRequired: false };

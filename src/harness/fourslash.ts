@@ -99,7 +99,7 @@ namespace FourSlash {
 
     export import IndentStyle = ts.IndentStyle;
 
-    const entityMap = ts.createMapFromMapLike({
+    const entityMap = ts.mapOfMapLike({
         "&": "&amp;",
         "\"": "&quot;",
         "'": "&#39;",
@@ -966,7 +966,7 @@ namespace FourSlash {
 
         public verifyQuickInfos(namesAndTexts: { [name: string]: string | [string, string] }) {
             //TODO: don't bother creating a map
-            ts.createMapFromMapLike(namesAndTexts).forEach((text, name) => {
+            ts.mapOfMapLike(namesAndTexts).forEach((text, name) => {
                 if (text instanceof Array) {
                     assert(text.length === 2);
                     const [expectedText, expectedDocumentation] = text;
@@ -1822,7 +1822,7 @@ namespace FourSlash {
         }
 
         public rangesByText(): ts.MapLike<Range[]> {
-            return ts._toMapLike(this.rangesByTextMap());
+            return ts.mapLikeOfMap(this.rangesByTextMap());
         }
 
         private rangeText({fileName, start, end}: Range, more = false): string {
@@ -2073,7 +2073,7 @@ namespace FourSlash {
 
         public verifyBraceCompletionAtPosition(negative: boolean, openingBrace: string) {
 
-            const openBraceMap = ts.createMapFromMapLike<ts.CharacterCodes>({
+            const openBraceMap = ts.mapOfMapLike<ts.CharacterCodes>({
                 "(": ts.CharacterCodes.openParen,
                 "{": ts.CharacterCodes.openBrace,
                 "[": ts.CharacterCodes.openBracket,

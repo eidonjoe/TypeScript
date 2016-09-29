@@ -2293,6 +2293,7 @@ namespace ts {
     /* @internal */
     export interface TransientSymbol extends Symbol, SymbolLinks { }
 
+    //Uh-uh. Hope no one is looking at this...
     export type SymbolTable = StringMap<Symbol>;
 
     /** Represents a "prefix*suffix" pattern. */
@@ -2446,6 +2447,11 @@ namespace ts {
     // Enum types (TypeFlags.Enum)
     export interface EnumType extends Type {
         memberTypes: NumberMap<number, EnumLiteralType>;
+    }
+
+    //move to its old place
+    export interface MapLike<T> {
+        [index: string]: T;
     }
 
     // Enum types (TypeFlags.EnumLiteral)

@@ -63,7 +63,7 @@ namespace ts {
         }
 
         if (transpileOptions.renamedDependencies) {
-            sourceFile.renamedDependencies = createMapFromMapLike(transpileOptions.renamedDependencies);
+            sourceFile.renamedDependencies = mapOfMapLike(transpileOptions.renamedDependencies);
         }
 
         const newLine = getNewLineCharacter(options);

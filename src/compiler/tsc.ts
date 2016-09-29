@@ -93,7 +93,7 @@ namespace ts {
             return false;
         }
         try {
-            ts.localizedDiagnosticMessages = createMapFromMapLike<string>(JSON.parse(fileContents));
+            ts.localizedDiagnosticMessages = mapOfMapLike<string>(JSON.parse(fileContents));
         }
         catch (e) {
             errors.push(createCompilerDiagnostic(Diagnostics.Corrupted_locale_file_0, filePath));
@@ -127,7 +127,7 @@ namespace ts {
     const gutterSeparator = " ";
     const resetEscapeSequence = "\u001b[0m";
     const ellipsis = "...";
-    const categoryFormatMap = createMapFromMapLike<string>({
+    const categoryFormatMap = mapOfMapLike<string>({
         [DiagnosticCategory.Warning]: yellowForegroundEscapeSequence,
         [DiagnosticCategory.Error]: redForegroundEscapeSequence,
         [DiagnosticCategory.Message]: blueForegroundEscapeSequence,

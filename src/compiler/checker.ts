@@ -291,7 +291,7 @@ namespace ts {
             NullFacts = TypeofEQObject | TypeofNEString | TypeofNENumber | TypeofNEBoolean | TypeofNESymbol | TypeofNEFunction | TypeofNEHostObject | EQNull | EQUndefinedOrNull | NEUndefined | Falsy,
         }
 
-        const typeofEQFacts = createMapFromMapLike({
+        const typeofEQFacts = mapOfMapLike({
             "string": TypeFacts.TypeofEQString,
             "number": TypeFacts.TypeofEQNumber,
             "boolean": TypeFacts.TypeofEQBoolean,
@@ -301,7 +301,7 @@ namespace ts {
             "function": TypeFacts.TypeofEQFunction
         });
 
-        const typeofNEFacts = createMapFromMapLike({
+        const typeofNEFacts = mapOfMapLike({
             "string": TypeFacts.TypeofNEString,
             "number": TypeFacts.TypeofNENumber,
             "boolean": TypeFacts.TypeofNEBoolean,
@@ -311,7 +311,7 @@ namespace ts {
             "function": TypeFacts.TypeofNEFunction
         });
 
-        const typeofTypesByName = createMapFromMapLike<Type>({
+        const typeofTypesByName = mapOfMapLike<Type>({
             "string": stringType,
             "number": numberType,
             "boolean": booleanType,
@@ -17787,7 +17787,7 @@ namespace ts {
         }
 
         function hasExportedMembers(moduleSymbol: Symbol) {
-            return _someKey(moduleSymbol.exports, id => id !== "export=");
+            return someKeyInMap(moduleSymbol.exports, id => id !== "export=");
         }
 
         function checkExternalModuleExports(node: SourceFile | ModuleDeclaration) {

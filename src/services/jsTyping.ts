@@ -59,7 +59,7 @@ namespace ts.JsTyping {
 
         if (!safeList) {
             const result = readConfigFile(safeListPath, (path: string) => host.readFile(path));
-            safeList = createMapFromMapLike<string>(result.config);
+            safeList = mapOfMapLike<string>(result.config);
         }
 
         const filesToWatch: string[] = [];

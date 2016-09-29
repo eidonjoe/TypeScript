@@ -1446,7 +1446,7 @@ namespace ts.server {
 
             project.directoriesWatchedForWildcards = new StringMap<FileWatcher>();
             //neater
-            createMapFromMapLike(projectOptions.wildcardDirectories).forEach((flag, directory) => {
+            mapOfMapLike(projectOptions.wildcardDirectories).forEach((flag, directory) => {
                 if (comparePaths(configDirectoryPath, directory, ".", !this.host.useCaseSensitiveFileNames) !== Comparison.EqualTo) {
                     const recursive = (flag & WatchDirectoryFlags.Recursive) !== 0;
                     this.log(`Add ${ recursive ? "recursive " : ""}watcher for: ${directory}`);

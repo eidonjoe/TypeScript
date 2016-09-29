@@ -62,7 +62,7 @@ namespace ts {
         },
         {
             name: "jsx",
-            type: createMapFromMapLike({
+            type: mapOfMapLike({
                 "preserve": JsxEmit.Preserve,
                 "react": JsxEmit.React
             }),
@@ -92,7 +92,7 @@ namespace ts {
         {
             name: "module",
             shortName: "m",
-            type: createMapFromMapLike({
+            type: mapOfMapLike({
                 "none": ModuleKind.None,
                 "commonjs": ModuleKind.CommonJS,
                 "amd": ModuleKind.AMD,
@@ -106,7 +106,7 @@ namespace ts {
         },
         {
             name: "newLine",
-            type: createMapFromMapLike({
+            type: mapOfMapLike({
                 "crlf": NewLineKind.CarriageReturnLineFeed,
                 "lf": NewLineKind.LineFeed
             }),
@@ -255,7 +255,7 @@ namespace ts {
         {
             name: "target",
             shortName: "t",
-            type: createMapFromMapLike({
+            type: mapOfMapLike({
                 "es3": ScriptTarget.ES3,
                 "es5": ScriptTarget.ES5,
                 "es6": ScriptTarget.ES6,
@@ -289,7 +289,7 @@ namespace ts {
         },
         {
             name: "moduleResolution",
-            type: createMapFromMapLike({
+            type: mapOfMapLike({
                 "node": ModuleResolutionKind.NodeJs,
                 "classic": ModuleResolutionKind.Classic,
             }),
@@ -398,7 +398,7 @@ namespace ts {
             type: "list",
             element: {
                 name: "lib",
-                type: createMapFromMapLike({
+                type: mapOfMapLike({
                     // JavaScript only
                     "es5": "lib.es5.d.ts",
                     "es6": "lib.es2015.d.ts",
@@ -771,7 +771,7 @@ namespace ts {
                     }
                 }
             }
-            return _toMapLike(result);
+            return mapLikeOfMap(result);
         }
     }
 
@@ -1194,7 +1194,7 @@ namespace ts {
         wildcardFiles.sort(host.useCaseSensitiveFileNames ? compareStrings : compareStringsCaseInsensitive);
         return {
             fileNames: literalFiles.concat(wildcardFiles),
-            wildcardDirectories: _toMapLike(wildcardDirectories)
+            wildcardDirectories: mapLikeOfMap(wildcardDirectories)
         };
     }
 

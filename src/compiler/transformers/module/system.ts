@@ -271,7 +271,7 @@ namespace ts {
             // this set is used to filter names brought by star expors.
 
             // local names set should only be added if we have anything exported
-            if (!exportedLocalNames && isEmpty(exportSpecifiers)) {
+            if (!exportedLocalNames && mapIsEmpty(exportSpecifiers)) {
                 // no exported declarations (export var ...) or export specifiers (export {x})
                 // check if we have any non star export declarations.
                 let hasExportDeclarationWithExportClause = false;

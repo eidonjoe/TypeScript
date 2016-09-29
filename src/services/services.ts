@@ -923,7 +923,7 @@ namespace ts {
         const currentDirectory = host.getCurrentDirectory();
         // Check if the localized messages json is set, otherwise query the host for it
         if (!localizedDiagnosticMessages && host.getLocalizedDiagnosticMessages) {
-            localizedDiagnosticMessages = createMapFromMapLike<string>(host.getLocalizedDiagnosticMessages());
+            localizedDiagnosticMessages = mapOfMapLike<string>(host.getLocalizedDiagnosticMessages());
         }
 
         function log(message: string) {

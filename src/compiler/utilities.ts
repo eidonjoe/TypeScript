@@ -2307,7 +2307,7 @@ namespace ts {
     // the map below must be updated. Note that this regexp *does not* include the 'delete' character.
     // There is no reason for this other than that JSON.stringify does not handle it either.
     const escapedCharsRegExp = /[\\\"\u0000-\u001f\t\v\f\b\r\n\u2028\u2029\u0085]/g;
-    const escapedCharsMap = createMapFromMapLike({
+    const escapedCharsMap = mapOfMapLike({
         "\0": "\\0",
         "\t": "\\t",
         "\v": "\\v",

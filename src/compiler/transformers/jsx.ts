@@ -272,7 +272,7 @@ namespace ts {
     }
 
     function createEntitiesMap(): StringMap<number> {
-        return createMapFromMapLike<number>({
+        return mapOfMapLike<number>({
             "quot": 0x0022,
             "amp": 0x0026,
             "apos": 0x0027,
