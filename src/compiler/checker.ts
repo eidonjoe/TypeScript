@@ -1690,7 +1690,7 @@ namespace ts {
                 }
 
                 // Check if symbol is any of the alias
-                return _findMapValue(symbols, symbolFromSymbolTable => {
+                return findInMap(symbols, symbolFromSymbolTable => {
                     if (symbolFromSymbolTable.flags & SymbolFlags.Alias
                         && symbolFromSymbolTable.name !== "export="
                         && !getDeclarationOfKind(symbolFromSymbolTable, SyntaxKind.ExportSpecifier)) {
@@ -3861,15 +3861,17 @@ namespace ts {
                 enumType.symbol = symbol;
                 if (enumHasLiteralMembers(symbol)) {
                     const memberTypeList: Type[] = [];
-                    const memberTypes = new StringMap<EnumLiteralType>();
+                    const memberTypes = new NumberMap<number, EnumLiteralType>();
                     for (const declaration of enumType.symbol.declarations) {
                         if (declaration.kind === SyntaxKind.EnumDeclaration) {
                             computeEnumMemberValues(<EnumDeclaration>declaration);
                             for (const member of (<EnumDeclaration>declaration).members) {
                                 const memberSymbol = getSymbolOfNode(member);
                                 const value = getEnumMemberValue(member);
-                                if (!_getWakka(memberTypes, value)) {
-                                    const memberType = _setWakka(memberTypes, value, createEnumLiteralType(memberSymbol, enumType, "" + value));
+                                if (!memberTypes.get(value)) {
+                                    //setAndReturn?
+                                    const memberType = createEnumLiteralType(memberSymbol, enumType, "" + value);
+                                    memberTypes.set(value, memberType);
                                     memberTypeList.push(memberType);
                                 }
                             }
@@ -3891,7 +3893,7 @@ namespace ts {
             if (!links.declaredType) {
                 const enumType = <EnumType>getDeclaredTypeOfEnum(getParentOfSymbol(symbol));
                 links.declaredType = enumType.flags & TypeFlags.Union ?
-                    _getWakka(enumType.memberTypes, getEnumMemberValue(<EnumDeclaration>symbol.valueDeclaration)) :
+                    enumType.memberTypes.get(getEnumMemberValue(<EnumDeclaration>symbol.valueDeclaration)) :
                     enumType;
             }
             return links.declaredType;
@@ -15531,7 +15533,7 @@ namespace ts {
 
         function checkUnusedLocalsAndParameters(node: Node): void {
             if (node.parent.kind !== SyntaxKind.InterfaceDeclaration && noUnusedIdentifiers && !isInAmbientContext(node)) {
-                _eachValue(node.locals, local => {
+                node.locals.forEach(local => {
                     if (!local.isReferenced) {
                         if (local.valueDeclaration && local.valueDeclaration.kind === SyntaxKind.Parameter) {
                             const parameter = <ParameterDeclaration>local.valueDeclaration;
@@ -15600,7 +15602,7 @@ namespace ts {
 
         function checkUnusedModuleMembers(node: ModuleDeclaration | SourceFile): void {
             if (compilerOptions.noUnusedLocals && !isInAmbientContext(node)) {
-                _eachValue(node.locals, local => {
+                node.locals.forEach(local => {
                     if (!local.isReferenced && !local.exportSymbol) {
                         for (const declaration of local.declarations) {
                             if (!isAmbientModule(declaration)) {
@@ -18658,7 +18660,7 @@ namespace ts {
                 // otherwise - check if at least one export is value
                 symbolLinks.exportsSomeValue = hasExportAssignment
                     ? !!(moduleSymbol.flags & SymbolFlags.Value)
-                    : _someValue(getExportsOfModule(moduleSymbol), isValue);
+                    : someValueInMap(getExportsOfModule(moduleSymbol), isValue);
             }
 
             return symbolLinks.exportsSomeValue;

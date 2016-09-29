@@ -10,14 +10,14 @@
 
 /* @internal */
 namespace ts {
-    const moduleTransformerMap = createMapFromMapLike<Transformer>({
-        [ModuleKind.ES6]: transformES6Module,
-        [ModuleKind.System]: transformSystemModule,
-        [ModuleKind.AMD]: transformModule,
-        [ModuleKind.CommonJS]: transformModule,
-        [ModuleKind.UMD]: transformModule,
-        [ModuleKind.None]: transformModule,
-    });
+    const moduleTransformerMap = new NumberMap<ModuleKind, Transformer>([
+        [ModuleKind.ES6, transformES6Module],
+        [ModuleKind.System, transformSystemModule],
+        [ModuleKind.AMD, transformModule],
+        [ModuleKind.CommonJS, transformModule],
+        [ModuleKind.UMD, transformModule],
+        [ModuleKind.None, transformModule],
+    ]);
 
     const enum SyntaxKindFeatureFlags {
         Substitution = 1 << 0,
@@ -170,7 +170,7 @@ namespace ts {
         const transformers: Transformer[] = [];
 
         transformers.push(transformTypeScript);
-        transformers.push(_getWakka(moduleTransformerMap, moduleKind) || _getWakka(moduleTransformerMap, ModuleKind.None));
+        transformers.push(moduleTransformerMap.get(moduleKind) || moduleTransformerMap.get(ModuleKind.None));
 
         if (jsx === JsxEmit.React) {
             transformers.push(transformJsx);

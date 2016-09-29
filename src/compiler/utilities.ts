@@ -2282,8 +2282,9 @@ namespace ts {
 
             forEach(nonFileDiagnostics, pushDiagnostic);
 
-            _eachValue(fileDiagnostics, diagnostics =>
-                forEach(diagnostics, pushDiagnostic));
+            fileDiagnostics.forEach(diagnostics => {
+                forEach(diagnostics, pushDiagnostic)
+            });
 
             return sortAndDeduplicateDiagnostics(allDiagnostics);
         }
@@ -3363,18 +3364,21 @@ namespace ts {
         return false;
     }
 
-    const syntaxKindCache = new StringMap<string>();
+    const syntaxKindCache = new NumberMap<SyntaxKind, string>();
 
     export function formatSyntaxKind(kind: SyntaxKind): string {
         const syntaxKindEnum = (<any>ts).SyntaxKind;
         if (syntaxKindEnum) {
-            if (_hasWakka(syntaxKindCache, kind)) {
-                return _getWakka(syntaxKindCache, kind);
+            if (syntaxKindCache.has(kind)) {
+                return syntaxKindCache.get(kind);
             }
 
             for (const name in syntaxKindEnum) {
                 if (syntaxKindEnum[name] === kind) {
-                    return _setWakka(syntaxKindCache, kind, kind.toString() + " (" + name + ")");
+                    //setAndReturn
+                    const value = kind.toString() + " (" + name + ")";
+                    syntaxKindCache.set(kind, value);
+                    return value;
                 }
             }
         }

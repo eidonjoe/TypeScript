@@ -54,11 +54,11 @@ namespace ts.NavigateTo {
 
             const nameToDeclarations = sourceFile.getNamedDeclarations();
             _eachAndBreakIfReturningTrue(nameToDeclarations, (name, declarations) => {
-                if (!declarations) { return; }
+                if (!declarations) { return false; }
                 // First do a quick check to see if the name of the declaration matches the
                 // last portion of the (possibly) dotted name they're searching for.
                 let matches = patternMatcher.getMatchesForLastSegmentOfPattern(name);
-                if (!matches) { return; }
+                if (!matches) { return false; }
 
                 for (const declaration of declarations) {
                     // It was a match!  If the pattern has dots in it, then also see if the
@@ -80,6 +80,8 @@ namespace ts.NavigateTo {
                     const matchKind = bestMatchKind(matches);
                     rawItems.push({ name, fileName, matchKind, isCaseSensitive: allMatchesAreCaseSensitive(matches), declaration });
                 }
+
+                return false;
             });
         }
 

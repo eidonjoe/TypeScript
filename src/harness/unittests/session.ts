@@ -363,15 +363,15 @@ namespace ts.server {
         class InProcClient {
             private server: InProcSession;
             private seq = 0;
-            private callbacks = new StringMap<(resp: protocol.Response) => void>();
+            private callbacks = new NumberMap<number, (resp: protocol.Response) => void>();
             private eventHandlers = new StringMap<(args: any) => void>();
 
             handle(msg: protocol.Message): void {
                 if (msg.type === "response") {
                     const response = <protocol.Response>msg;
-                    if (_hasWakka(this.callbacks, response.request_seq)) {
-                        _getWakka(this.callbacks, response.request_seq)(response);
-                        _deleteWakka(this.callbacks, response.request_seq);
+                    if (this.callbacks.has(response.request_seq)) {
+                        this.callbacks.get(response.request_seq)(response);
+                        this.callbacks.delete(response.request_seq);
                     }
                 }
                 else if (msg.type === "event") {
@@ -405,7 +405,7 @@ namespace ts.server {
                     command,
                     arguments: args
                 });
-                _setWakka(this.callbacks, this.seq, callback);
+                this.callbacks.set(this.seq, callback);
             }
         };
 

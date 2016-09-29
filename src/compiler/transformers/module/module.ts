@@ -4,12 +4,12 @@
 /*@internal*/
 namespace ts {
     export function transformModule(context: TransformationContext) {
-        const transformModuleDelegates = createMapFromMapLike<(node: SourceFile) => SourceFile>({
-            [ModuleKind.None]: transformCommonJSModule,
-            [ModuleKind.CommonJS]: transformCommonJSModule,
-            [ModuleKind.AMD]: transformAMDModule,
-            [ModuleKind.UMD]: transformUMDModule,
-        });
+        const transformModuleDelegates = new NumberMap<ModuleKind, (node: SourceFile) => SourceFile>([
+            [ModuleKind.None, transformCommonJSModule],
+            [ModuleKind.CommonJS,transformCommonJSModule],
+            [ModuleKind.AMD, transformAMDModule],
+            [ModuleKind.UMD, transformUMDModule],
+        ]);
 
         const {
             startLexicalEnvironment,
@@ -43,7 +43,7 @@ namespace ts {
         let bindingNameExportSpecifiersMap: StringMap<ExportSpecifier[]>;
         // Subset of exportSpecifiers that is a binding-name.
         // This is to reduce amount of memory we have to keep around even after we done with module-transformer
-        const bindingNameExportSpecifiersForFileMap = new StringMap<StringMap<ExportSpecifier[]>>();
+        const bindingNameExportSpecifiersForFileMap = new NumberMap<number, StringMap<ExportSpecifier[]>>();
         let hasExportStarsToExportValues: boolean;
 
         return transformSourceFile;
@@ -61,7 +61,7 @@ namespace ts {
                 ({ externalImports, exportSpecifiers, exportEquals, hasExportStarsToExportValues } = collectExternalModuleInfo(node, resolver));
 
                 // Perform the transformation.
-                const transformModule = _getWakka(transformModuleDelegates, moduleKind) || _getWakka(transformModuleDelegates, ModuleKind.None);
+                const transformModule = transformModuleDelegates.get(moduleKind) || transformModuleDelegates.get(ModuleKind.None);
                 const updated = transformModule(node);
                 aggregateTransformFlags(updated);
 
@@ -668,10 +668,10 @@ namespace ts {
             else {
                 if (!exportEquals && exportSpecifiers && exportSpecifiers.has(name.text)) {
                     const sourceFileId = getOriginalNodeId(currentSourceFile);
-                    if (!_getWakka(bindingNameExportSpecifiersForFileMap, sourceFileId)) {
-                        _setWakka(bindingNameExportSpecifiersForFileMap, sourceFileId, new StringMap<ExportSpecifier[]>());
+                    if (!bindingNameExportSpecifiersForFileMap.get(sourceFileId)) {
+                        bindingNameExportSpecifiersForFileMap.set(sourceFileId, new StringMap<ExportSpecifier[]>());
                     }
-                    _getWakka(bindingNameExportSpecifiersForFileMap, sourceFileId).set(name.text, exportSpecifiers.get(name.text));
+                    bindingNameExportSpecifiersForFileMap.get(sourceFileId).set(name.text, exportSpecifiers.get(name.text));
                     addExportMemberAssignments(resultStatements, name);
                 }
             }
@@ -823,7 +823,7 @@ namespace ts {
 
         function onEmitNode(node: Node, emit: (node: Node) => void): void {
             if (node.kind === SyntaxKind.SourceFile) {
-                bindingNameExportSpecifiersMap = _getWakka(bindingNameExportSpecifiersForFileMap, getOriginalNodeId(node));
+                bindingNameExportSpecifiersMap = bindingNameExportSpecifiersForFileMap.get(getOriginalNodeId(node));
                 previousOnEmitNode(node, emit);
                 bindingNameExportSpecifiersMap = undefined;
             }

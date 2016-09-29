@@ -888,7 +888,7 @@ namespace FourSlash {
         }
 
         public verifyRangesWithSameTextReferenceEachOther() {
-            ts._eachValue(this.rangesByTextMap(), ranges => this.verifyRangesReferenceEachOther(ranges));
+            this.rangesByTextMap().forEach(ranges => this.verifyRangesReferenceEachOther(ranges));
         }
 
         public verifyDisplayPartsOfReferencedSymbol(expected: ts.SymbolDisplayPart[]) {

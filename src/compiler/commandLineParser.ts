@@ -506,7 +506,7 @@ namespace ts {
     /* @internal */
     export function createCompilerDiagnosticForInvalidCustomType(opt: CommandLineOptionOfCustomType): Diagnostic {
         const namesOfType: string[] = [];
-        _eachKey(opt.type, key => namesOfType.push(` '${key}'`));
+        forEachKeyInMap(opt.type, key => namesOfType.push(` '${key}'`));
         return createCompilerDiagnostic(Diagnostics.Argument_for_0_option_must_be_Colon_1, `--${opt.name}`, namesOfType);
     }
 
@@ -721,7 +721,7 @@ namespace ts {
         //Changed this from MapLike to Map, because it's only used with Maps
         function getNameOfCompilerOptionValue(value: CompilerOptionsValue, customTypeMap: StringMap<string | number>): string | undefined {
             // There is a typeMap associated with this command-line option so use it to map value back to its name
-            return _find(customTypeMap, (key, customValue) => {
+            return findInMap(customTypeMap, (customValue, key) => {
                 if (customValue === value) {
                     return key;
                 }
@@ -1259,7 +1259,7 @@ namespace ts {
             }
 
             // Remove any subpaths under an existing recursively watched directory.
-            _eachKey(wildcardDirectories, key => {
+            forEachKeyInMap(wildcardDirectories, key => {
                 for (const recursiveKey of recursiveKeys) {
                     if (key !== recursiveKey && containsPath(recursiveKey, key, path, !useCaseSensitiveFileNames)) {
                         wildcardDirectories.delete(key);

@@ -566,8 +566,7 @@ namespace ts.server {
             }
 
             let strBuilder = "";
-            ts._eachValue(this.filenameToSourceFile,
-                sourceFile => { strBuilder += sourceFile.fileName + "\n"; });
+            this.filenameToSourceFile.forEach(sourceFile => { strBuilder += sourceFile.fileName + "\n"; });
             return strBuilder;
         }
 
@@ -871,7 +870,7 @@ namespace ts.server {
             if (project.isConfiguredProject()) {
                 project.projectFileWatcher.close();
                 project.directoryWatcher.close();
-                _eachValue(project.directoriesWatchedForWildcards, watcher => { watcher.close(); });
+                project.directoriesWatchedForWildcards.forEach(watcher => { watcher.close(); });
                 delete project.directoriesWatchedForWildcards;
                 unorderedRemoveItem(this.configuredProjects, project);
             }
