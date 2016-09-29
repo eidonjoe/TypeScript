@@ -456,13 +456,13 @@ namespace ts {
         public scriptKind: ScriptKind;
         public languageVersion: ScriptTarget;
         public languageVariant: LanguageVariant;
-        public identifiers: Map<string>;
-        public nameTable: Map<number>;
-        public resolvedModules: Map<ResolvedModule>;
-        public resolvedTypeReferenceDirectiveNames: Map<ResolvedTypeReferenceDirective>;
+        public identifiers: StringMap<string>;
+        public nameTable: StringMap<number>;
+        public resolvedModules: StringMap<ResolvedModule>;
+        public resolvedTypeReferenceDirectiveNames: StringMap<ResolvedTypeReferenceDirective>;
         public imports: LiteralExpression[];
         public moduleAugmentations: LiteralExpression[];
-        private namedDeclarations: Map<Declaration[]>;
+        private namedDeclarations: StringMap<Declaration[]>;
 
         constructor(kind: SyntaxKind, pos: number, end: number) {
             super(kind, pos, end);
@@ -484,7 +484,7 @@ namespace ts {
             return ts.getPositionOfLineAndCharacter(this, line, character);
         }
 
-        public getNamedDeclarations(): Map<Declaration[]> {
+        public getNamedDeclarations(): StringMap<Declaration[]> {
             if (!this.namedDeclarations) {
                 this.namedDeclarations = this.computeNamedDeclarations();
             }
@@ -492,7 +492,7 @@ namespace ts {
             return this.namedDeclarations;
         }
 
-        private computeNamedDeclarations(): Map<Declaration[]> {
+        private computeNamedDeclarations(): StringMap<Declaration[]> {
             const result = new StringMap<Declaration[]>();
 
             forEachChild(this, visit);
@@ -1822,7 +1822,7 @@ namespace ts {
     }
 
     /* @internal */
-    export function getNameTable(sourceFile: SourceFile): Map<number> {
+    export function getNameTable(sourceFile: SourceFile): StringMap<number> {
         if (!sourceFile.nameTable) {
             initializeNameTable(sourceFile);
         }

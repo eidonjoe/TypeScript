@@ -35,7 +35,7 @@ namespace ts {
         const exportFunctionForFileMap: Identifier[] = [];
         let currentSourceFile: SourceFile;
         let externalImports: (ImportDeclaration | ImportEqualsDeclaration | ExportDeclaration)[];
-        let exportSpecifiers: Map<ExportSpecifier[]>;
+        let exportSpecifiers: StringMap<ExportSpecifier[]>;
         let exportEquals: ExportAssignment;
         let hasExportStarsToExportValues: boolean;
         let exportFunctionForFile: Identifier;

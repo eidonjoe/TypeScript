@@ -6,13 +6,13 @@ namespace ts {
         content: string;
     }
 
-    function createDefaultServerHost(fileMap: Map<File>): server.ServerHost {
-        const existingDirectories = createSet();
+    function createDefaultServerHost(fileMap: StringMap<File>): server.ServerHost {
+        const existingDirectories = new StringSet();
         _eachKey(fileMap, name => {
             let dir = getDirectoryPath(name);
             let previous: string;
             do {
-                _add(existingDirectories, dir);
+                existingDirectories.add(dir);
                 previous = dir;
                 dir = getDirectoryPath(dir);
             } while (dir !== previous);
@@ -36,7 +36,7 @@ namespace ts {
                 return fileMap.has(path);
             },
             directoryExists: (path: string): boolean => {
-                return _setHas(existingDirectories, path);
+                return existingDirectories.has(path);
             },
             createDirectory: (path: string) => {
             },

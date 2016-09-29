@@ -1079,7 +1079,7 @@ namespace Harness {
             { name: "symlink", type: "string" }
         ];
 
-        let optionsIndex: ts.Map<ts.CommandLineOption>;
+        let optionsIndex: ts.StringMap<ts.CommandLineOption>;
         function getCommandLineOption(name: string): ts.CommandLineOption {
             if (!optionsIndex) {
                 optionsIndex = new ts.StringMap<ts.CommandLineOption>();
@@ -1489,7 +1489,7 @@ namespace Harness {
                 Harness.Baseline.runBaseline(outputFileName, () => fullBaseLine, opts);
             }
 
-            function generateBaseLine(typeWriterResults: ts.Map<TypeWriterResult[]>, isSymbolBaseline: boolean): string {
+            function generateBaseLine(typeWriterResults: ts.StringMap<TypeWriterResult[]>, isSymbolBaseline: boolean): string {
                 const typeLines: string[] = [];
                 const typeMap: { [fileName: string]: { [lineNum: number]: string[]; } } = {};
 

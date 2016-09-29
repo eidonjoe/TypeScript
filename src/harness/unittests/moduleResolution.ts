@@ -10,11 +10,11 @@ namespace ts {
         const map = arrayToMap(files, f => f.name);
 
         if (hasDirectoryExists) {
-            const directories = createSet();
+            const directories = new StringSet();
             for (const f of files) {
                 let name = getDirectoryPath(f.name);
                 while (true) {
-                    _add(directories, name);
+                    directories.add(name);
                     const baseName = getDirectoryPath(name);
                     if (baseName === name) {
                         break;
@@ -24,11 +24,9 @@ namespace ts {
             }
             return {
                 readFile,
-                directoryExists: path => {
-                    return _setHas(directories, path);
-                },
+                directoryExists: path => directories.has(path),
                 fileExists: path => {
-                    assert.isTrue(_setHas(directories, getDirectoryPath(path)), `'fileExists' '${path}' request in non-existing directory`);
+                    assert.isTrue(directories.has(getDirectoryPath(path)), `'fileExists' '${path}' request in non-existing directory`);
                     return map.has(path);
                 }
             };
@@ -282,7 +280,7 @@ namespace ts {
     });
 
     describe("Module resolution - relative imports", () => {
-        function test(files: Map<string>, currentDirectory: string, rootFiles: string[], expectedFilesCount: number, relativeNamesToCheck: string[]) {
+        function test(files: StringMap<string>, currentDirectory: string, rootFiles: string[], expectedFilesCount: number, relativeNamesToCheck: string[]) {
             const options: CompilerOptions = { module: ModuleKind.CommonJS };
             const host: CompilerHost = {
                 getSourceFile: (fileName: string, languageVersion: ScriptTarget) => {
@@ -355,7 +353,7 @@ export = C;
 
     describe("Files with different casing", () => {
         const library = createSourceFile("lib.d.ts", "", ScriptTarget.ES5);
-        function test(files: Map<string>, options: CompilerOptions, currentDirectory: string, useCaseSensitiveFileNames: boolean, rootFiles: string[], diagnosticCodes: number[]): void {
+        function test(files: StringMap<string>, options: CompilerOptions, currentDirectory: string, useCaseSensitiveFileNames: boolean, rootFiles: string[], diagnosticCodes: number[]): void {
             const getCanonicalFileName = createGetCanonicalFileName(useCaseSensitiveFileNames);
             if (!useCaseSensitiveFileNames) {
                 //don't use reduce then! silly billy

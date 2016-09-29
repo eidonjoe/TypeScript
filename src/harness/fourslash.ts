@@ -1812,7 +1812,7 @@ namespace FourSlash {
             return this.testData.ranges;
         }
 
-        private rangesByTextMap(): ts.Map<Range[]> {
+        private rangesByTextMap(): ts.StringMap<Range[]> {
             const result = new ts.StringMap<Range[]>();
             for (const range of this.getRanges()) {
                 const text = this.rangeText(range);

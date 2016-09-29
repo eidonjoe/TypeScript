@@ -3,7 +3,7 @@
 
 /*@internal*/
 namespace ts {
-    const entities: Map<number> = createEntitiesMap();
+    const entities: StringMap<number> = createEntitiesMap();
 
     export function transformJsx(context: TransformationContext) {
         const compilerOptions = context.getCompilerOptions();
@@ -271,7 +271,7 @@ namespace ts {
         }
     }
 
-    function createEntitiesMap(): Map<number> {
+    function createEntitiesMap(): StringMap<number> {
         return createMapFromMapLike<number>({
             "quot": 0x0022,
             "amp": 0x0026,

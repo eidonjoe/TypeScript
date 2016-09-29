@@ -243,8 +243,8 @@ namespace ts {
         context.onSubstituteNode = onSubstituteNode;
 
         let currentSourceFile: SourceFile;
-        let renamedCatchVariables: Set;
-        let renamedCatchVariableDeclarations: Map<Identifier>;
+        let renamedCatchVariables: StringSet;
+        let renamedCatchVariableDeclarations: StringMap<Identifier>;
 
         let inGeneratorFunctionBody: boolean;
         let inStatementContainingYield: boolean;
@@ -1903,7 +1903,7 @@ namespace ts {
         }
 
         function substituteExpressionIdentifier(node: Identifier) {
-            if (renamedCatchVariables && _setHas(renamedCatchVariables, node.text)) {
+            if (renamedCatchVariables && renamedCatchVariables.has(node.text)) {
                 const original = getOriginalNode(node);
                 if (isIdentifier(original) && original.parent) {
                     const declaration = resolver.getReferencedValueDeclaration(original);
@@ -2073,12 +2073,12 @@ namespace ts {
             const name = declareLocal(text);
 
             if (!renamedCatchVariables) {
-                renamedCatchVariables = createSet();
+                renamedCatchVariables = new StringSet();
                 renamedCatchVariableDeclarations = new StringMap<Identifier>();
                 context.enableSubstitution(SyntaxKind.Identifier);
             }
 
-            _add(renamedCatchVariables, text);
+            renamedCatchVariables.add(text);
             _setWakka(renamedCatchVariableDeclarations, getOriginalNodeId(variable), name);
 
             const exception = <ExceptionBlock>peekBlock();

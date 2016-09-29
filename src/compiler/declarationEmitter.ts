@@ -59,7 +59,7 @@ namespace ts {
         let resultHasExternalModuleIndicator: boolean;
         let currentText: string;
         let currentLineMap: number[];
-        let currentIdentifiers: Map<string>;
+        let currentIdentifiers: StringMap<string>;
         let isCurrentFileExternalModule: boolean;
         let reportedDeclarationError = false;
         let errorNameNode: DeclarationName;
@@ -75,7 +75,7 @@ namespace ts {
         // and we could be collecting these paths from multiple files into single one with --out option
         let referencesOutput = "";
 
-        let usedTypeDirectiveReferences: Set;
+        let usedTypeDirectiveReferences: StringSet;
 
         // Emit references corresponding to each file
         const emittedReferencedFiles: SourceFile[] = [];
@@ -156,7 +156,7 @@ namespace ts {
         });
 
         if (usedTypeDirectiveReferences) {
-            _eachInSet(usedTypeDirectiveReferences, directive => {
+            usedTypeDirectiveReferences.forEach(directive => {
                 referencesOutput += `/// <reference types="${directive}" />${newLine}`;
             });
         }
@@ -267,11 +267,11 @@ namespace ts {
             }
 
             if (!usedTypeDirectiveReferences) {
-                usedTypeDirectiveReferences = createSet();
+                usedTypeDirectiveReferences = new StringSet();
             }
             for (const directive of typeReferenceDirectives) {
-                if (!_setHas(usedTypeDirectiveReferences, directive)) {
-                    _add(usedTypeDirectiveReferences, directive);
+                if (!usedTypeDirectiveReferences.has(directive)) {
+                    usedTypeDirectiveReferences.add(directive);
                 }
             }
         }

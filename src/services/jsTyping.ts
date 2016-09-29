@@ -16,17 +16,17 @@ namespace ts.JsTyping {
     interface PackageJson {
         _requiredBy?: string[];
         //Is this a real Mpa, or a MapLike?
-        dependencies?: Map<string>;
-        devDependencies?: Map<string>;
+        dependencies?: StringMap<string>;
+        devDependencies?: StringMap<string>;
         name?: string;
-        optionalDependencies?: Map<string>;
-        peerDependencies?: Map<string>;
+        optionalDependencies?: StringMap<string>;
+        peerDependencies?: StringMap<string>;
         typings?: string;
     };
 
     // A map of loose file names to library names
     // that we are confident require typings
-    let safeList: Map<string>;
+    let safeList: StringMap<string>;
 
     /**
      * @param host is the object providing I/O related operations.
@@ -42,7 +42,7 @@ namespace ts.JsTyping {
         fileNames: string[],
         projectRootPath: Path,
         safeListPath: Path,
-        packageNameToTypingLocation: Map<string>,
+        packageNameToTypingLocation: StringMap<string>,
         typingOptions: TypingOptions,
         compilerOptions: CompilerOptions):
         { cachedTypingPaths: string[], newTypingNames: string[], filesToWatch: string[] } {

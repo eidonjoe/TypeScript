@@ -68,7 +68,7 @@ namespace ts {
         return entry;
     }
 
-    function checkMapKeys(caption: string, map: Map<any>, expectedKeys: string[]) {
+    function checkMapKeys(caption: string, map: StringMap<any>, expectedKeys: string[]) {
         assert.equal(reduceProperties(map, count => count + 1, 0), expectedKeys.length, `${caption}: incorrect size of map`);
         for (const name of expectedKeys) {
             assert.isTrue(map.has(name), `${caption} is expected to contain ${name}, actual keys: ${Object.keys(map)}`);

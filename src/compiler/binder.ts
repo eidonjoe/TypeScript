@@ -126,7 +126,7 @@ namespace ts {
 
         let symbolCount = 0;
         let Symbol: { new (flags: SymbolFlags, name: string): Symbol };
-        let classifiableNames: Set;
+        let classifiableNames: StringSet;
 
         const unreachableFlow: FlowNode = { flags: FlowFlags.Unreachable };
         const reportedUnreachableFlow: FlowNode = { flags: FlowFlags.Unreachable };
@@ -140,7 +140,7 @@ namespace ts {
             options = opts;
             languageVersion = getEmitScriptTarget(options);
             inStrictMode = !!file.externalModuleIndicator;
-            classifiableNames = createSet();
+            classifiableNames = new StringSet();
             symbolCount = 0;
             skipTransformFlagAggregation = isDeclarationFile(file);
 
@@ -335,7 +335,7 @@ namespace ts {
                 symbol = _getOrUpdate(symbolTable, name, name => createSymbol(SymbolFlags.None, name));
 
                 if (name && (includes & SymbolFlags.Classifiable)) {
-                    _add(classifiableNames, name);
+                    classifiableNames.add(name);
                 }
 
                 if (symbol.flags & excludes) {
@@ -2088,7 +2088,7 @@ namespace ts {
                 bindAnonymousDeclaration(node, SymbolFlags.Class, bindingName);
                 // Add name of class expression into the map for semantic classifier
                 if (node.name) {
-                    _add(classifiableNames, node.name.text);
+                    classifiableNames.add(node.name.text);
                 }
             }
 

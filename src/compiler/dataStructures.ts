@@ -9,8 +9,8 @@ namespace ts {
      * This is an abstract data type: only functions in dataStructures.ts should use the internal representation of Maps.
      * The internal representation depends on whether the native Map class is available.
      */
-    //Note: we shouldn't have publicly exported members of the Map type. Use MapLike instead in those situations.
-    export interface Map<T> {
+    //Note: we shouldn't have publicly exported members of the StringMap type. Use MapLike instead in those situations.
+    export interface StringMap<T> {
         // Ensure that Map<string> and Map<number> are incompatible
         //__mapBrand: T;
 
@@ -48,26 +48,22 @@ namespace ts {
 /* @internal */
 //map implementation
 namespace ts {
-    export interface Iterator<T> { //TODO: don't export
+    interface Iterator<T> { //TODO: don't export
         next(): { value: T, done: boolean }; //TODO: LKG updated, so use { value: T, done: false } | { value: never, done: true }
     }
 
-    interface NativeMap<T> extends Map<T> {
-        clear(): void;
-        delete(key: string): void;
-        get(key: string): T;
-        has(key: string): boolean;
-        set(key: string, value: T): this;
+    declare const Map: { new<T>(): StringMap<T> } | undefined;
+    const useNativeMaps = typeof Map !== "undefined";
 
+    //We must feature-detect for these methods.
+    interface FullyFeaturedMap<T> extends StringMap<T> {
         keys(): Iterator<string>;
         values(): Iterator<T>;
         entries(): Iterator<[string, T]>;
-
-        //kill?
-        forEach(f: (value: T, key: string) => void): void;
     }
+    const fullyFeaturedMaps = useNativeMaps && "keys" in Map.prototype && "values" in Map.prototype && "entries" in Map.prototype
 
-    class ShimMap<T> implements Map<T> {
+    export const StringMap: { new<T>(): StringMap<T> } = useNativeMaps ? Map : class ShimMap<T> implements StringMap<T> {
         private data: { [key: string]: T };
 
         constructor() {
@@ -99,11 +95,7 @@ namespace ts {
                 f(this.data[key], key);
             }
         }
-    }
-
-    declare const Map: { new<T>(): NativeMap<T> } | undefined;
-    const realMaps = typeof Map !== "undefined";
-    export const StringMap: { new<T>(): Map<T> } = realMaps ? Map : ShimMap;
+    };
 
     const createObject = Object.create;
     const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -114,7 +106,7 @@ namespace ts {
 
     //rename, move
     //TODO: just use `new StringMap([[key, value]])?
-    export function createMapWithEntry<T>(key: string, value: T): Map<T> {
+    export function createMapWithEntry<T>(key: string, value: T): StringMap<T> {
         const map = new StringMap<T>();
         map.set(key, value);
         return map;
@@ -144,55 +136,13 @@ namespace ts {
         return map;
     }
 
-    //export const _g: <T>(map: Map<T>, key: string) => T = realMaps
-    //    ? <T>(map: NativeMap<T>, key: string) => map.get(key)
-    //    : <T>(map: MapLike<T>, key: string) => map[key];
-
-    //export const _s: <T>(map: Map<T>, key: string, value: T) => T = realMaps
-    //    ? <T>(map: NativeMap<T>, key: string, value: T) => {
-    //        map.set(key, value);
-    //        return value;
-    //    }
-    //    : <T>(map: MapLike<T>, key: string, value: T) => map[key] = value;
-
-    export function setAndReturn<T>(map: Map<T>, key: string, value: T): T {
+    export function setAndReturn<T>(map: StringMap<T>, key: string, value: T): T {
         map.set(key, value);
         return value;
     }
 
-    //export const _has: (map: Map<any>, key: string) => boolean = realMaps
-    //    ? (map: NativeMap<any>, key: string) => map.has(key)
-    //    : (map: MapLike<any>, key: string) => key in map;
-
-    //export const _delete: (map: Map<any>, key: string) => void = realMaps
-    //    ? (map: NativeMap<any>, key: string) => {
-    //        map.delete(key);
-    //    }
-    //    : (map: MapLike<any>, key: string) => {
-    //       delete map[key];
-    //    };
-
-    /*export const _each: <T>(map: Map<T>, f: (key: string, value: T) => void) => void = realMaps
-        ? <T>(map: NativeMap<T>, f: (key: string, value: T) => void) => {
-            /*const iter = map.entries();
-            while (true) {
-                const { value: pair, done } = iter.next();
-                if (done) {
-                    return;
-                }
-                const [key, value] = pair;
-                f(key, value);
-            }* /
-            map.forEach((value, key) => { f(key, value) }); // No idea whether this is better or worse...
-        }
-        : <T>(map: MapLike<T>, f: (key: string, value: T) => void): void => {
-            for (const key in map) {
-                f(key, map[key]);
-            }
-        };*/
-
-    export const _find: <T, U>(map: Map<T>, f: (key: string, value: T) => U | undefined) => U | undefined = realMaps
-        ? <T, U>(map: NativeMap<T>, f: (key: string, value: T) => U | undefined) => {
+    export const _find: <T, U>(map: StringMap<T>, f: (key: string, value: T) => U | undefined) => U | undefined = fullyFeaturedMaps
+        ? <T, U>(map: FullyFeaturedMap<T>, f: (key: string, value: T) => U | undefined) => {
             const iter = map.entries();
             while (true) {
                 const { value: pair, done } = iter.next();
@@ -206,62 +156,17 @@ namespace ts {
                 }
             }
         }
-        : <T, U>(map: MapLike<T>, f: (key: string, value: T) => U | undefined) => {
-            for (const key in map) {
-                const result = f(key, map[key]);
-                if (result !== undefined)
-                    return result;
-            }
-            return undefined;
-        };
-
-    export const _someKey: (map: Map<any>, predicate: (key: string) => boolean) => boolean = realMaps
-        ? (map: NativeMap<any>, predicate: (key: string) => boolean) => {
-            const iter = map.keys();
-            while (true) {
-                const { value: key, done } = iter.next();
-                if (done) {
-                    return false;
-                }
-                if (predicate(key)) {
-                    return true;
-                }
-            }
+        : <T, U>(map: StringMap<T>, f: (key: string, value: T) => U | undefined) => {
+            let result: U | undefined;
+            map.forEach((value, key) => {
+                if (result === undefined)
+                    result = f(key, value);
+            });
+            return result;
         }
-        : (map: MapLike<any>, predicate: (key: string) => boolean) => {
-            for (const key in map) {
-                if (predicate(key)) {
-                    return true;
-                }
-            }
-            return false;
-        };
 
-    //only used in one place, kill? Write in terms of _someEntry?
-    export const _someValue: <T>(map: Map<T>, predicate: (value: T) => boolean) => boolean = realMaps
-        ? <T>(map: NativeMap<T>, f: (value: T) => boolean) => {
-            const iter = map.values();
-            while (true) {
-                const { value, done } = iter.next();
-                if (done) {
-                    return false;
-                }
-                if (f(value)) {
-                    return true;
-                }
-            }
-        }
-        : <T>(map: MapLike<T>, f: (value: T) => boolean) => {
-            for (const key in map) {
-                if (f(map[key])) {
-                    return true;
-                }
-            }
-            return false;
-        };
-
-    export const _someEntry: <T>(map: Map<T>, predicate: (key: string, value: T) => boolean) => boolean = realMaps
-        ? <T>(map: NativeMap<T>, f: (key: string, value: T) => boolean) => {
+    export const _someEntry: <T>(map: StringMap<T>, predicate: (key: string, value: T) => boolean) => boolean = fullyFeaturedMaps
+        ? <T>(map: FullyFeaturedMap<T>, predicate: (key: string, value: T) => boolean) => {
             const iter = map.entries();
             while (true) {
                 const { value: pair, done } = iter.next();
@@ -269,23 +174,55 @@ namespace ts {
                     return false;
                 }
                 const [key, value] = pair;
-                if (f(key, value)) {
+                if (predicate(key, value)) {
                     return true;
                 }
             }
         }
-        : <T>(map: MapLike<T>, f: (key: string, value: T) => boolean) => {
-            for (const key in map) {
-                if (f(key, map[key])) {
+        : <T>(map: StringMap<T>, predicate: (key: string, value: T) => boolean) => {
+            let found = false;
+            map.forEach((value, key) => {
+                found = found || predicate(key, value);
+            });
+            return found;
+        };
+
+    export const _someKey: (map: StringMap<any>, predicate: (key: string) => boolean) => boolean = fullyFeaturedMaps
+        ? (map: FullyFeaturedMap<any>, predicate: (key: string) => boolean) => {
+            const iter: Iterator<string> = map.keys();
+            while (true) {
+                const { value: key, done } = iter.next();
+                if (done) {
+                    return false;
+                }
+                if (predicate(key)) {
                     return true;
                 }
             }
-            return false;
-        };
+        }
+        : _someEntry;
 
-    export const _eachKey: (map: Map<any>, f: (key: string) => void) => void = realMaps
-        ? (map: NativeMap<any>, f: (key: string) => void) => {
-            const iter = map.keys();
+    //only used in one place, kill? Write in terms of _someEntry?
+    export const _someValue: <T>(map: StringMap<T>, predicate: (value: T) => boolean) => boolean = fullyFeaturedMaps
+        ? <T>(map: FullyFeaturedMap<T>, predicate: (value: T) => boolean) => {
+            const iter = map.values();
+            while (true) {
+                const { value, done } = iter.next();
+                if (done) {
+                    return false;
+                }
+                if (predicate(value)) {
+                    return true;
+                }
+            }
+        }
+        : <T>(map: StringMap<T>, predicate: (value: T) => boolean) =>
+            _someEntry(map, (key, value) => predicate(value));
+
+
+    export const _eachKey: (map: StringMap<any>, f: (key: string) => void) => void = fullyFeaturedMaps
+        ? (map: FullyFeaturedMap<any>, f: (key: string) => void) => {
+            const iter: Iterator<string> = map.keys();
             while (true) {
                 const { value: key, done } = iter.next();
                 if (done) {
@@ -293,17 +230,14 @@ namespace ts {
                 }
                 f(key);
             }
-            //map.forEach((value, key) => f(key)); //does this do unnecessary lookup?
         }
-        : (map: MapLike<any>, f: (key: string) => void) => {
-            for (const key in map) {
-                f(key);
-            }
+        : (map: StringMap<any>, f: (key: string) => void) => {
+            map.forEach((value, key) => f(key))
         };
 
-    //reconsider
-    export const _eachAndBreakIfReturningTrue: <T>(map: Map<T>, f: (key: string, value: T) => boolean) => void = realMaps
-        ? <T>(map: NativeMap<T>, f: (key: string, value: T) => boolean) => {
+    //consider using _find
+    export const _eachAndBreakIfReturningTrue: <T>(map: StringMap<T>, f: (key: string, value: T) => boolean) => void = fullyFeaturedMaps
+        ? <T>(map: FullyFeaturedMap<T>, f: (key: string, value: T) => boolean) => {
             const iter = map.entries();
             while (true) {
                 const { value: pair, done } = iter.next();
@@ -314,17 +248,16 @@ namespace ts {
                 f(key, value);
             }
         }
-        : <T>(map: MapLike<T>, f: (key: string, value: T) => boolean) => {
-            for (const key in map) {
-                const shouldBreak = f(key, map[key]);
-                if (shouldBreak) {
-                    break;
-                }
-            }
+        : <T>(map: StringMap<T>, f: (key: string, value: T) => boolean) => {
+            let didBreak = false
+            map.forEach((value, key) => {
+                didBreak = didBreak || f(key, value)
+            });
         };
 
-    export const _eachValue: <T>(map: Map<T>, f: (value: T) => void) => void = realMaps
-        ? <T>(map: NativeMap<T>, f: (value: T) => void) => {
+    //reconsider
+    export const _eachValue: <T>(map: StringMap<T>, f: (value: T) => void) => void = fullyFeaturedMaps
+        ? <T>(map: FullyFeaturedMap<T>, f: (value: T) => void) => {
             const iter = map.values();
             while (true) {
                 const { value, done } = iter.next();
@@ -335,24 +268,22 @@ namespace ts {
             }
             //map.forEach(f);
         }
-        : <T>(map: MapLike<T>, f: (value: T) => void) => {
-            for (const key in map) {
-                f(map[key]);
-            }
+        : <T>(map: StringMap<T>, f: (value: T) => void) => {
+            map.forEach(f);
         };
 
-    export const _toMapLike: <T>(map: Map<T>) => MapLike<T> = realMaps
-        ? <T>(map: NativeMap<T>) => {
-            const obj = createDictionaryModeObject();
-            map.forEach((value, key) => {
-                obj[key] = value;
-            });
-            return obj;
-        }
-        : <T>(map: MapLike<T>) => map;
+    export function _toMapLike<T>(map: StringMap<T>): MapLike<T> {
+        const obj = createDictionaryModeObject();
+        map.forEach((value, key) => {
+            obj[key] = value;
+        });
+        return obj;
+    }
 
-    export const _findMapValue: <T, U>(map: Map<T>, f: (value: T) => U | undefined) => U | undefined = realMaps
-        ? <T, U>(map: NativeMap<T>, f: (value: T) => U | undefined) => {
+    //reconsider, and rename
+    //This is basically the same as _find
+    export const _findMapValue: <T, U>(map: StringMap<T>, f: (value: T) => U | undefined) => U | undefined = fullyFeaturedMaps
+        ? <T, U>(map: FullyFeaturedMap<T>, f: (value: T) => U | undefined) => {
             const iter = map.values();
             while (true) {
                 const { value, done } = iter.next();
@@ -365,14 +296,13 @@ namespace ts {
                 }
             }
         }
-        : <T, U>(map: MapLike<T>, f: (value: T) => U | undefined) => {
-            for (const key in map) {
-                const result = f(map[key]);
-                if (result !== undefined) {
-                    return result;
-                }
-            }
-            return undefined;
+        : <T, U>(map: StringMap<T>, f: (value: T) => U | undefined) => {
+            let result: U | undefined;
+            map.forEach(value => {
+                if (result === undefined)
+                    result = f(value);
+            });
+            return result;
         };
 }
 
@@ -380,29 +310,29 @@ namespace ts {
 //Map extensions: don't depend on internal details
 /* @internal */
 namespace ts {
-    export function isEmpty<T>(map: Map<T>): boolean {
+    export function isEmpty<T>(map: StringMap<T>): boolean {
         return !_someKey(map, () => true);
     }
 
     //Use a NumberMap type instead
-    export function _deleteWakka(map: Map<any>, key: any): void {
+    export function _deleteWakka(map: StringMap<any>, key: any): void {
         map.delete(key.toString());
     }
-    export function _hasWakka(map: Map<any>, key: any): boolean {
+    export function _hasWakka(map: StringMap<any>, key: any): boolean {
         return map.has(key.toString());
     }
-    export function _getWakka<T>(map: Map<T>, key: any): T {
+    export function _getWakka<T>(map: StringMap<T>, key: any): T {
         return map.get(key.toString());
     }
-    export function _setWakka<T>(map: Map<T>, key: any, value: T): T {
+    export function _setWakka<T>(map: StringMap<T>, key: any, value: T): T {
         return setAndReturn(map, key.toString(), value);
     }
 
-    export function _mod<T>(map: Map<T>, key: string, modifier: (value: T) => T) {
+    export function _mod<T>(map: StringMap<T>, key: string, modifier: (value: T) => T) {
         map.set(key, modifier(map.get(key)));
     }
 
-    export function cloneMap<T>(map: Map<T>) {
+    export function cloneMap<T>(map: StringMap<T>) {
         const clone = new StringMap<T>();
         copyMapPropertiesFromTo(map, clone);
         return clone;
@@ -415,15 +345,15 @@ namespace ts {
      * @param target A map to which properties should be copied.
      */
     //rename : "entries", not "properties"
-    export function copyMapPropertiesFromTo<T>(source: Map<T>, target: Map<T>): void {
+    export function copyMapPropertiesFromTo<T>(source: StringMap<T>, target: StringMap<T>): void {
         source.forEach((value, key) => {
             target.set(key, value);
         });
     }
 
     //move
-    export function copySetValuesFromTo<T>(source: Set, target: Set): void {
-        _eachInSet(source, value => _add(target, value));
+    export function copySetValuesFromTo<T>(source: StringSet, target: StringSet): void {
+        source.forEach(value => target.add(value));
     }
 
     //kill?
@@ -437,7 +367,7 @@ namespace ts {
      * @param callback An aggregation function that is called for each entry in the map
      * @param initial The initial value for the reduction.
      */
-    export function reduceProperties<T, U>(map: Map<T>, callback: (aggregate: U, value: T, key: string) => U, initial: U): U {
+    export function reduceProperties<T, U>(map: StringMap<T>, callback: (aggregate: U, value: T, key: string) => U, initial: U): U {
         let result = initial;
         map.forEach((value, key) => {
             result = callback(result, value, String(key)); //why cast to string???
@@ -445,13 +375,13 @@ namespace ts {
         return result;
     }
 
-    export function _mapValuesMutate<T>(map: Map<T>, mapValue: (value: T) => T): void {
+    export function _mapValuesMutate<T>(map: StringMap<T>, mapValue: (value: T) => T): void {
         map.forEach((value, key) => {
             map.set(key, mapValue(value));
         });
     }
 
-    export function _ownKeys<T>(map: Map<T>): string[] {
+    export function _ownKeys<T>(map: StringMap<T>): string[] {
         const keys: string[] = [];
         _eachKey(map, key => {
             keys.push(key);
@@ -459,7 +389,7 @@ namespace ts {
         return keys;
     }
 
-    export function _getOrUpdate<T>(map: Map<T>, key: string, getValue: (key: string) => T): T {
+    export function _getOrUpdate<T>(map: StringMap<T>, key: string, getValue: (key: string) => T): T {
         return map.has(key) ? map.get(key) : setAndReturn(map, key, getValue(key));
     }
 
@@ -473,9 +403,9 @@ namespace ts {
      * the same key with the given 'makeKey' function, then the element with the higher
      * index in the array will be the one associated with the produced key.
      */
-    export function arrayToMap<T>(array: T[], makeKey: (value: T) => string): Map<T>;
-    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue: (value: T) => U): Map<U>;
-    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue?: (value: T) => U): Map<T | U> {
+    export function arrayToMap<T>(array: T[], makeKey: (value: T) => string): StringMap<T>;
+    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue: (value: T) => U): StringMap<U>;
+    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue?: (value: T) => U): StringMap<T | U> {
         const result = new StringMap<T | U>();
         for (const value of array) {
             result.set(makeKey(value), makeValue ? makeValue(value) : value);
@@ -487,7 +417,7 @@ namespace ts {
      * Adds the value to an array of values associated with the key, and returns the array.
      * Creates the array if it does not already exist.
      */
-    export function multiMapAdd<V>(map: Map<V[]>, key: string, value: V): V[] {
+    export function multiMapAdd<V>(map: StringMap<V[]>, key: string, value: V): V[] {
         const values = map.get(key);
         if (values) {
             values.push(value);
@@ -503,7 +433,7 @@ namespace ts {
      * Does not preserve the order of those values.
      * Does nothing if `key` is not in `map`, or `value` is not in `map[key]`.
      */
-    export function multiMapRemove<V>(map: Map<V[]>, key: string, value: V): void {
+    export function multiMapRemove<V>(map: StringMap<V[]>, key: string, value: V): void {
         const values = map.get(key);
         if (values) {
             unorderedRemoveItem(values, value);
@@ -514,7 +444,7 @@ namespace ts {
     }
 
     //todo: neater
-    export function _equalMaps<T>(left: Map<T>, right: Map<T>, equalityComparer?: (left: T, right: T) => boolean) {
+    export function _equalMaps<T>(left: StringMap<T>, right: StringMap<T>, equalityComparer?: (left: T, right: T) => boolean) {
         if (left === right) return true;
         if (!left || !right) return false;
         const someInLeftHasNoMatch = _someEntry(left, (leftKey, leftValue) => {
@@ -531,89 +461,60 @@ namespace ts {
 
 /* @internal */
 namespace ts {
-    export interface Set {
-        __setBrand: any;
-    }
-
-    interface NativeSet extends Set {
+    //rename to StringSet
+    export interface StringSet {
         readonly size: number;
-        add(value: string): this;
+        add(value: string): void;
         has(value: string): boolean;
         delete(value: string): void;
-        values(): Iterator<string>;
         forEach(f: (value: string) => void): void;
     }
 
-    interface SetLike extends Set {
-        [value: string]: boolean; //TODO: `: true`
-    }
+    declare const Set: { new(): StringSet } | undefined;
+    export const StringSet: { new(): StringSet } = typeof Set !== "undefined" ? Set : class ShimSet implements StringSet {
+        data: { [value: string]: true };
+        size: number;
 
-    declare const Set: { new(): NativeSet } | undefined;
-    const realSets = typeof Set !== "undefined";
+        constructor() {
+            this.data = createDictionaryModeObject();
+            this.size = 0;
+        }
 
-    /*interface StringSetModule {
-        createSet(): Set
-        add(set: Set, value: string): string;
-    }
-    const StringSet: StringSetModule = realSets ?
-        {
-            createSet: () => new Set(),
-            add(set: NativeSet, value: string) {
-                set.add(value);
-                return value;
+        add(value: string) {
+            if (!this.has(value)) {
+                this.data[value] = true;
+                this.size++;
             }
         }
-        :
-        {
-            createSet: () => createDictionaryModeObject(),
-            add(set: SetLike, value: string) {
-                set[value] = true;
-                return value;
+
+        has(value: string) {
+            return value in this.data;
+        }
+
+        delete(value: string) {
+            if (this.has(value)) {
+                delete this.data[value];
+                this.size--;
             }
-        }*/
-
-    export const createSet: () => Set = realSets
-        ? () => new Set()
-        : () => createDictionaryModeObject();
-
-    export const _add: (set: Set, value: string) => string = realSets
-        ? (set: NativeSet, value: string) => {
-            set.add(value);
-            return value;
-        }
-        : (set: SetLike, value: string) =>  {
-            set[value] = true;
-            return value;
         }
 
-    export const _setHas: (set: Set, value: string) => boolean = realSets
-        ? (set: NativeSet, value: string) => set.has(value)
-        : (set: SetLike, value: string) => value in set
-
-    export const _deleteFromSet: (set: Set, value: string) => void = realSets
-        ? (set: NativeSet, value: string) => {
-            set.delete(value)
-        }
-        : (set: SetLike, value: string) => {
-            delete set[value];
-        }
-
-    export const _setIsEmpty: (set: Set) => boolean = realSets
-        ? (set: NativeSet) => set.size === 0
-        : (set: SetLike) => {
-            for (const value in set)
-                return false;
-            return true;
-        }
-
-    export const _eachInSet: (set: Set, f: (value: string) => void) => void = realSets
-        ? (set: NativeSet, f: (value: string) => void) => {
-            set.forEach(f);
-        }
-        : (set: SetLike, f: (value: string) => void) => {
-            for (const value in set)
+        forEach(f: (value: string) => void) {
+            for (const value in this.data)
                 f(value);
         }
+
+        //Won't work because we're not targeting ES5???
+        //get size() {
+        //    let size = 0;
+        //    for (const value in this.data)
+        //        size++;
+        //    return size;
+        //}
+    }
+
+    export function _setIsEmpty(set: StringSet): boolean {
+        return set.size === 0
+    }
 }
 
 //MAPLIKE

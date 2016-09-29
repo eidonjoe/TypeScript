@@ -378,7 +378,7 @@ namespace ts.FindAllReferences {
             const possiblePositions = getPossibleSymbolReferencePositions(sourceFile, searchText, start, container.getEnd());
 
             const parents = getParentSymbolsOfPropertyAccess();
-            const inheritsFromCache: Map<boolean> = new StringMap<boolean>();
+            const inheritsFromCache: StringMap<boolean> = new StringMap<boolean>();
 
             if (possiblePositions.length) {
                 // Build the set of symbols to search for, initially it has only the current symbol
@@ -705,7 +705,7 @@ namespace ts.FindAllReferences {
          * @param parent        Another class or interface Symbol
          * @param cachedResults A map of symbol id pairs (i.e. "child,parent") to booleans indicating previous results
          */
-        function explicitlyInheritsFrom(child: Symbol, parent: Symbol, cachedResults: Map<boolean>): boolean {
+        function explicitlyInheritsFrom(child: Symbol, parent: Symbol, cachedResults: StringMap<boolean>): boolean {
             const parentIsInterface = parent.getFlags() & SymbolFlags.Interface;
             return searchHierarchy(child);
 
@@ -1112,7 +1112,7 @@ namespace ts.FindAllReferences {
             }
         }
 
-        function getRelatedSymbol(searchSymbols: Symbol[], referenceSymbol: Symbol, referenceLocation: Node, searchLocationIsConstructor: boolean, parents: Symbol[] | undefined, cache: Map<boolean>): Symbol {
+        function getRelatedSymbol(searchSymbols: Symbol[], referenceSymbol: Symbol, referenceLocation: Node, searchLocationIsConstructor: boolean, parents: Symbol[] | undefined, cache: StringMap<boolean>): Symbol {
             if (contains(searchSymbols, referenceSymbol)) {
                 // If we are searching for constructor uses, they must be 'new' expressions.
                 return (!searchLocationIsConstructor || isNewExpressionTarget(referenceLocation)) && referenceSymbol;

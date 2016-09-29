@@ -58,7 +58,7 @@ namespace ts.Completions {
 
         return { isMemberCompletion, isNewIdentifierLocation: isNewIdentifierLocation || isSourceFileJavaScript(sourceFile), entries };
 
-        function getJavaScriptCompletionEntries(sourceFile: SourceFile, position: number, uniqueNames: Set): CompletionEntry[] {
+        function getJavaScriptCompletionEntries(sourceFile: SourceFile, position: number, uniqueNames: StringSet): CompletionEntry[] {
             const entries: CompletionEntry[] = [];
 
             getNameTable(sourceFile).forEach((nameTablePosition, name) => {
@@ -67,8 +67,8 @@ namespace ts.Completions {
                     return;
                 }
 
-                if (!_setHas(uniqueNames, name)) {
-                    _add(uniqueNames, name);
+                if (!uniqueNames.has(name)) {
+                    uniqueNames.add(name);
                     const displayName = getCompletionEntryDisplayName(unescapeIdentifier(name), compilerOptions.target, /*performCharacterChecks*/ true);
                     if (displayName) {
                         const entry = {
@@ -111,17 +111,17 @@ namespace ts.Completions {
 
         }
 
-        function getCompletionEntriesFromSymbols(symbols: Symbol[], entries: CompletionEntry[], location: Node, performCharacterChecks: boolean): Set {
+        function getCompletionEntriesFromSymbols(symbols: Symbol[], entries: CompletionEntry[], location: Node, performCharacterChecks: boolean): StringSet {
             const start = timestamp();
-            const uniqueNames = createSet();
+            const uniqueNames = new StringSet();
             if (symbols) {
                 for (const symbol of symbols) {
                     const entry = createCompletionEntry(symbol, location, performCharacterChecks);
                     if (entry) {
                         const id = escapeIdentifier(entry.name);
-                        if (!_setHas(uniqueNames, id)) {
+                        if (!uniqueNames.has(id)) {
                             entries.push(entry);
-                            _add(uniqueNames, id);
+                            uniqueNames.add(id);
                         }
                     }
                 }
@@ -339,7 +339,7 @@ namespace ts.Completions {
                 const files = tryReadDirectory(host, baseDirectory, extensions, /*exclude*/undefined, /*include*/["./*"]);
 
                 if (files) {
-                    const foundFiles = createSet();
+                    const foundFiles = new StringSet();
                     for (let filePath of files) {
                         filePath = normalizePath(filePath);
                         if (exclude && comparePaths(filePath, exclude, scriptPath, ignoreCase) === Comparison.EqualTo) {
@@ -348,12 +348,12 @@ namespace ts.Completions {
 
                         const foundFileName = includeExtensions ? getBaseFileName(filePath) : removeFileExtension(getBaseFileName(filePath));
 
-                        if (!_setHas(foundFiles, foundFileName)) {
-                            _add(foundFiles, foundFileName);
+                        if (!foundFiles.has(foundFileName)) {
+                            foundFiles.add(foundFileName);
                         }
                     }
 
-                    _eachInSet(foundFiles, foundFile => {
+                    foundFiles.forEach(foundFile => {
                         result.push(createCompletionEntryForModule(foundFile, ScriptElementKind.scriptElement, span));
                     });
                 }
@@ -1512,7 +1512,7 @@ namespace ts.Completions {
          *          do not occur at the current position and have not otherwise been typed.
          */
         function filterNamedImportOrExportCompletionItems(exportsOfModule: Symbol[], namedImportsOrExports: ImportOrExportSpecifier[]): Symbol[] {
-            const existingImportsOrExports = createSet();
+            const existingImportsOrExports = new StringSet();
 
             for (const element of namedImportsOrExports) {
                 // If this is the current item we are editing right now, do not filter it out
@@ -1521,14 +1521,14 @@ namespace ts.Completions {
                 }
 
                 const name = element.propertyName || element.name;
-                _add(existingImportsOrExports, name.text);
+                existingImportsOrExports.add(name.text);
             }
 
             if (_setIsEmpty(existingImportsOrExports)) {
                 return filter(exportsOfModule, e => e.name !== "default");
             }
 
-            return filter(exportsOfModule, e => e.name !== "default" && !_setHas(existingImportsOrExports, e.name));
+            return filter(exportsOfModule, e => e.name !== "default" && !existingImportsOrExports.has(e.name));
         }
 
         /**
@@ -1542,7 +1542,7 @@ namespace ts.Completions {
                 return contextualMemberSymbols;
             }
 
-            const existingMemberNames = createSet();
+            const existingMemberNames = new StringSet();
             for (const m of existingMembers) {
                 // Ignore omitted expressions for missing members
                 if (m.kind !== SyntaxKind.PropertyAssignment &&
@@ -1572,10 +1572,10 @@ namespace ts.Completions {
                     existingName = (<Identifier>m.name).text;
                 }
 
-                _add(existingMemberNames, existingName);
+                existingMemberNames.add(existingName);
             }
 
-            return filter(contextualMemberSymbols, m => !_setHas(existingMemberNames, m.name));
+            return filter(contextualMemberSymbols, m => !existingMemberNames.has(m.name));
         }
 
         /**
@@ -1585,7 +1585,7 @@ namespace ts.Completions {
          *          do not occur at the current position and have not otherwise been typed.
          */
         function filterJsxAttributes(symbols: Symbol[], attributes: NodeArray<JsxAttribute | JsxSpreadAttribute>): Symbol[] {
-            const seenNames = createSet();
+            const seenNames = new StringSet();
             for (const attr of attributes) {
                 // If this is the current item we are editing right now, do not filter it out
                 if (attr.getStart() <= position && position <= attr.getEnd()) {
@@ -1593,11 +1593,11 @@ namespace ts.Completions {
                 }
 
                 if (attr.kind === SyntaxKind.JsxAttribute) {
-                    _add(seenNames, (<JsxAttribute>attr).name.text);
+                    seenNames.add((<JsxAttribute>attr).name.text);
                 }
             }
 
-            return filter(symbols, a => !_setHas(seenNames, a.name));
+            return filter(symbols, a => !seenNames.has(a.name));
         }
     }
 

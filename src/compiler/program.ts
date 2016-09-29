@@ -863,7 +863,7 @@ namespace ts {
     }
 
     export function createCompilerHost(options: CompilerOptions, setParentNodes?: boolean): CompilerHost {
-        const existingDirectories = createSet();
+        const existingDirectories = new StringSet();
 
         function getCanonicalFileName(fileName: string): string {
             // if underlying system can distinguish between two files whose names differs only in cases then file name already in canonical form.
@@ -895,11 +895,11 @@ namespace ts {
         }
 
         function directoryExists(directoryPath: string): boolean {
-            if (_setHas(existingDirectories, directoryPath)) {
+            if (existingDirectories.has(directoryPath)) {
                 return true;
             }
             if (sys.directoryExists(directoryPath)) {
-                _add(existingDirectories, directoryPath);
+                existingDirectories.add(directoryPath);
                 return true;
             }
             return false;
@@ -913,7 +913,7 @@ namespace ts {
             }
         }
 
-        let outputFingerprints: Map<OutputFingerprint>;
+        let outputFingerprints: StringMap<OutputFingerprint>;
 
         function writeFileIfUpdated(fileName: string, data: string, writeByteOrderMark: boolean): void {
             if (!outputFingerprints) {
@@ -1114,7 +1114,7 @@ namespace ts {
         let commonSourceDirectory: string;
         let diagnosticsProducingTypeChecker: TypeChecker;
         let noDiagnosticsTypeChecker: TypeChecker;
-        let classifiableNames: Set;
+        let classifiableNames: StringSet;
 
         let resolvedTypeReferenceDirectives = new StringMap<ResolvedTypeReferenceDirective>();
         let fileProcessingDiagnostics = createDiagnosticCollection();
@@ -1258,11 +1258,11 @@ namespace ts {
             return commonSourceDirectory;
         }
 
-        function getClassifiableNames(): Set {
+        function getClassifiableNames(): StringSet {
             if (!classifiableNames) {
                 // Initialize a checker so that all our files are bound.
                 getTypeChecker();
-                classifiableNames = createSet();
+                classifiableNames = new StringSet();
 
                 for (const sourceFile of files) {
                     //copyMapPropertiesFromTo(sourceFile.classifiableNames, classifiableNames);

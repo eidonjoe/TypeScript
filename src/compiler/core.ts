@@ -574,7 +574,7 @@ namespace ts {
         return text.replace(/{(\d+)}/g, (match, index?) => args[+index + baseIndex]);
     }
 
-    export let localizedDiagnosticMessages: Map<string> = undefined;
+    export let localizedDiagnosticMessages: StringMap<string> = undefined;
 
     export function getLocaleSpecificMessage(message: DiagnosticMessage) {
         return localizedDiagnosticMessages && localizedDiagnosticMessages.get(message.key) || message.message;
