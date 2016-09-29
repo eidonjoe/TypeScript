@@ -490,12 +490,12 @@ namespace ts {
             return optionNameMapCache;
         }
 
-        const optionNameMap = createMap<CommandLineOption>();
-        const shortOptionNames = createMap<string>();
+        const optionNameMap = new StringMap<CommandLineOption>();
+        const shortOptionNames = new StringMap<string>();
         forEach(optionDeclarations, option => {
-            _s(optionNameMap, option.name.toLowerCase(), option);
+            optionNameMap.set(option.name.toLowerCase(), option);
             if (option.shortName) {
-                _s(shortOptionNames, option.shortName, option.name);
+                shortOptionNames.set(option.shortName, option.name);
             }
         });
 
@@ -729,7 +729,7 @@ namespace ts {
         }
 
         function serializeCompilerOptions(options: CompilerOptions): MapLike<CompilerOptionsValue> {
-            const result = createMap<CompilerOptionsValue>();
+            const result = new StringMap<CompilerOptionsValue>();
             const optionsNameMap = getOptionNameMap().optionNameMap;
 
             for (const name in options) {
@@ -751,7 +751,7 @@ namespace ts {
                                 if (!customTypeMap) {
                                     // There is no map associated with this compiler option then use the value as-is
                                     // This is the case if the value is expect to be string, number, boolean or list of string
-                                    _s(result, name, value);
+                                    result.set(name, value);
                                 }
                                 else {
                                     if (optionDefinition.type === "list") {
@@ -759,11 +759,11 @@ namespace ts {
                                         for (const element of value as (string | number)[]) {
                                             convertedValue.push(getNameOfCompilerOptionValue(element, customTypeMap));
                                         }
-                                        _s(result, name, convertedValue);
+                                        result.set(name, convertedValue);
                                     }
                                     else {
                                         // There is a typeMap associated with this command-line option so use it to map value back to its name
-                                        _s(result, name, getNameOfCompilerOptionValue(value, customTypeMap));
+                                        result.set(name, getNameOfCompilerOptionValue(value, customTypeMap));
                                     }
                                 }
                             }
@@ -1130,12 +1130,12 @@ namespace ts {
         // Literal file names (provided via the "files" array in tsconfig.json) are stored in a
         // file map with a possibly case insensitive key. We use this map later when when including
         // wildcard paths.
-        const literalFileMap = createMap<string>();
+        const literalFileMap = new StringMap<string>();
 
         // Wildcard paths (provided via the "includes" array in tsconfig.json) are stored in a
         // file map with a possibly case insensitive key. We use this map to store paths matched
         // via wildcard, and to handle extension priority.
-        const wildcardFileMap = createMap<string>();
+        const wildcardFileMap = new StringMap<string>();
 
         if (include) {
             include = validateSpecs(include, errors, /*allowTrailingRecursion*/ false);
@@ -1160,7 +1160,7 @@ namespace ts {
         if (fileNames) {
             for (const fileName of fileNames) {
                 const file = combinePaths(basePath, fileName);
-                _s(literalFileMap, keyMapper(file), file);
+                literalFileMap.set(keyMapper(file), file);
             }
         }
 
@@ -1184,7 +1184,7 @@ namespace ts {
 
                 const key = keyMapper(file);
                 if (!literalFileMap.has(key) && !wildcardFileMap.has(key)) {
-                    _s(wildcardFileMap, key, file);
+                    wildcardFileMap.set(key, file);
                 }
             }
         }
@@ -1235,7 +1235,7 @@ namespace ts {
         //  /a/b/a?z    - Watch /a/b directly to catch any new file matching a?z
         const rawExcludeRegex = getRegularExpressionForWildcard(exclude, path, "exclude");
         const excludeRegex = rawExcludeRegex && new RegExp(rawExcludeRegex, useCaseSensitiveFileNames ? "" : "i");
-        const wildcardDirectories = createMap<WatchDirectoryFlags>();
+        const wildcardDirectories = new StringMap<WatchDirectoryFlags>();
         if (include !== undefined) {
             const recursiveKeys: string[] = [];
             for (const file of include) {
@@ -1250,7 +1250,7 @@ namespace ts {
                     const flags = watchRecursivePattern.test(name) ? WatchDirectoryFlags.Recursive : WatchDirectoryFlags.None;
                     const existingFlags = wildcardDirectories.get(key);
                     if (existingFlags === undefined || existingFlags < flags) {
-                        _s(wildcardDirectories, key, flags);
+                        wildcardDirectories.set(key, flags);
                         if (flags === WatchDirectoryFlags.Recursive) {
                             recursiveKeys.push(key);
                         }

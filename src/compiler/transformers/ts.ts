@@ -3190,7 +3190,7 @@ namespace ts {
                 context.enableSubstitution(SyntaxKind.Identifier);
 
                 // Keep track of class aliases.
-                classAliases = createMap<Identifier>();
+                classAliases = new StringMap<Identifier>();
             }
         }
 

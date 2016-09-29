@@ -27,8 +27,8 @@ namespace ts.performance {
      */
     export function mark(markName: string) {
         if (enabled) {
-            _s(marks, markName, timestamp());
-            _s(counts, markName, (counts.get(markName) || 0) + 1);
+            marks.set(markName, timestamp());
+            counts.set(markName, (counts.get(markName) || 0) + 1);
             profilerEvent(markName);
         }
     }
@@ -46,7 +46,7 @@ namespace ts.performance {
         if (enabled) {
             const end = endMarkName && marks.get(endMarkName) || timestamp();
             const start = startMarkName && marks.get(startMarkName) || profilerStart;
-            _s(measures, measureName, (measures.get(measureName) || 0) + (end - start));
+            measures.set(measureName, (measures.get(measureName) || 0) + (end - start));
         }
     }
 
@@ -74,14 +74,14 @@ namespace ts.performance {
      * @param cb The action to perform for each measure
      */
     export function forEachMeasure(cb: (measureName: string, duration: number) => void) {
-        _each(measures, cb);
+        measures.forEach((duration, measureName) => cb(measureName, duration));
     }
 
     /** Enables (and resets) performance measurements for the compiler. */
     export function enable() {
-        counts = createMap<number>();
-        marks = createMap<number>();
-        measures = createMap<number>();
+        counts = new StringMap<number>();
+        marks = new StringMap<number>();
+        measures = new StringMap<number>();
         enabled = true;
         profilerStart = timestamp();
     }

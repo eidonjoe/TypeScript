@@ -105,7 +105,7 @@ namespace ts {
     export function createDocumentRegistry(useCaseSensitiveFileNames?: boolean, currentDirectory = ""): DocumentRegistry {
         // Maps from compiler setting target (ES3, ES5, etc.) to all the cached documents we have
         // for those settings.
-        const buckets = createMap<FileMap<DocumentRegistryEntry>>();
+        const buckets = new StringMap<FileMap<DocumentRegistryEntry>>();
         const getCanonicalFileName = createGetCanonicalFileName(!!useCaseSensitiveFileNames);
 
         function getKeyForCompilationSettings(settings: CompilerOptions): DocumentRegistryBucketKey {
@@ -115,7 +115,7 @@ namespace ts {
         function getBucketForCompilationSettings(key: DocumentRegistryBucketKey, createIfMissing: boolean): FileMap<DocumentRegistryEntry> {
             let bucket = buckets.get(key);
             if (!bucket && createIfMissing) {
-                _s(buckets, key, bucket = createFileMap<DocumentRegistryEntry>());
+                buckets.set(key, bucket = createFileMap<DocumentRegistryEntry>());
             }
             return bucket;
         }

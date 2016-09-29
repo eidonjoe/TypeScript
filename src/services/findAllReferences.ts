@@ -378,7 +378,7 @@ namespace ts.FindAllReferences {
             const possiblePositions = getPossibleSymbolReferencePositions(sourceFile, searchText, start, container.getEnd());
 
             const parents = getParentSymbolsOfPropertyAccess();
-            const inheritsFromCache: Map<boolean> = createMap<boolean>();
+            const inheritsFromCache: Map<boolean> = new StringMap<boolean>();
 
             if (possiblePositions.length) {
                 // Build the set of symbols to search for, initially it has only the current symbol
@@ -720,7 +720,7 @@ namespace ts.FindAllReferences {
                 }
 
                 // Set the key so that we don't infinitely recurse
-                _s(cachedResults, key, false);
+                cachedResults.set(key, false);
 
                 const inherits = forEach(symbol.getDeclarations(), declaration => {
                     if (isClassLike(declaration)) {
@@ -744,7 +744,7 @@ namespace ts.FindAllReferences {
                     return false;
                 });
 
-                _s(cachedResults, key, inherits);
+                cachedResults.set(key, inherits);
                 return inherits;
             }
 
@@ -1046,7 +1046,7 @@ namespace ts.FindAllReferences {
 
                 // Add symbol of properties/methods of the same name in base classes and implemented interfaces definitions
                 if (!implementations && rootSymbol.parent && rootSymbol.parent.flags & (SymbolFlags.Class | SymbolFlags.Interface)) {
-                    getPropertySymbolsFromBaseTypes(rootSymbol.parent, rootSymbol.getName(), result, /*previousIterationSymbolsCache*/ createMap<Symbol>());
+                    getPropertySymbolsFromBaseTypes(rootSymbol.parent, rootSymbol.getName(), result, /*previousIterationSymbolsCache*/ new StringMap<Symbol>());
                 }
             });
 
@@ -1105,7 +1105,7 @@ namespace ts.FindAllReferences {
                         }
 
                         // Visit the typeReference as well to see if it directly or indirectly use that property
-                        _s(previousIterationSymbolsCache, symbol.name, symbol);
+                        previousIterationSymbolsCache.set(symbol.name, symbol);
                         getPropertySymbolsFromBaseTypes(type.symbol, propertyName, result, previousIterationSymbolsCache);
                     }
                 }
@@ -1176,7 +1176,7 @@ namespace ts.FindAllReferences {
                     }
 
                     const result: Symbol[] = [];
-                    getPropertySymbolsFromBaseTypes(rootSymbol.parent, rootSymbol.getName(), result, /*previousIterationSymbolsCache*/ createMap<Symbol>());
+                    getPropertySymbolsFromBaseTypes(rootSymbol.parent, rootSymbol.getName(), result, /*previousIterationSymbolsCache*/ new StringMap<Symbol>());
                     return forEach(result, s => searchSymbols.indexOf(s) >= 0 ? s : undefined);
                 }
 

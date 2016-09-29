@@ -130,7 +130,7 @@ namespace ts.server {
             const path = toPath(containingFile, this.host.getCurrentDirectory(), this.getCanonicalFileName);
             const currentResolutionsInFile = cache.get(path);
 
-            const newResolutions = createMap<T>();
+            const newResolutions = new StringMap<T>();
             const resolvedModules: R[] = [];
             const compilerOptions = this.getCompilationSettings();
 
@@ -146,7 +146,7 @@ namespace ts.server {
                     else {
                         resolution = loader(name, containingFile, compilerOptions, this.moduleResolutionHost);
                         resolution.lastCheckTime = Date.now();
-                        _s(newResolutions, name, resolution);
+                        newResolutions.set(name, resolution);
                     }
                 }
 
@@ -394,7 +394,7 @@ namespace ts.server {
         // Used to keep track of what directories are watched for this project
         directoriesWatchedForTsconfig: string[] = [];
         program: ts.Program;
-        filenameToSourceFile = ts.createMap<ts.SourceFile>();
+        filenameToSourceFile = new StringMap<ts.SourceFile>();
         updateGraphSeq = 0;
         /** Used for configured projects which may have multiple open roots */
         openRefCount = 0;
@@ -507,11 +507,11 @@ namespace ts.server {
                 return;
             }
 
-            this.filenameToSourceFile = createMap<SourceFile>();
+            this.filenameToSourceFile = new StringMap<SourceFile>();
             const sourceFiles = this.program.getSourceFiles();
             for (let i = 0, len = sourceFiles.length; i < len; i++) {
                 const normFilename = ts.normalizePath(sourceFiles[i].fileName);
-                _s(this.filenameToSourceFile, normFilename, sourceFiles[i]);
+                this.filenameToSourceFile.set(normFilename, sourceFiles[i]);
             }
         }
 
@@ -609,7 +609,7 @@ namespace ts.server {
     }
 
     export class ProjectService {
-        filenameToScriptInfo = ts.createMap<ScriptInfo>();
+        filenameToScriptInfo = new StringMap<ScriptInfo>();
         // open, non-configured root files
         openFileRoots: ScriptInfo[] = [];
         // projects built from openFileRoots
@@ -621,12 +621,12 @@ namespace ts.server {
         // open files that are roots of a configured project
         openFileRootsConfigured: ScriptInfo[] = [];
         // a path to directory watcher map that detects added tsconfig files
-        directoryWatchersForTsconfig = ts.createMap<FileWatcher>();
+        directoryWatchersForTsconfig = new StringMap<FileWatcher>();
         // count of how many projects are using the directory watcher. If the
         // number becomes 0 for a watcher, then we should close it.
-        directoryWatchersRefCount = ts.createMap<number>();
+        directoryWatchersRefCount = new StringMap<number>();
         hostConfiguration: HostConfiguration;
-        timerForDetectingProjectFileListChanges = createMap<any>();
+        timerForDetectingProjectFileListChanges = new StringMap<any>();
 
         constructor(public host: ServerHost, public psLogger: Logger, public eventHandler?: ProjectServiceEventHandler) {
             // ts.disableIncrementalParsing = true;
@@ -688,7 +688,7 @@ namespace ts.server {
             if (this.timerForDetectingProjectFileListChanges.get(project.projectFilename)) {
                 this.host.clearTimeout(this.timerForDetectingProjectFileListChanges.get(project.projectFilename));
             }
-            _s(this.timerForDetectingProjectFileListChanges, project.projectFilename, this.host.setTimeout(
+            this.timerForDetectingProjectFileListChanges.set(project.projectFilename, this.host.setTimeout(
                 () => this.handleProjectFileListChanges(project),
                 250
             ));
@@ -805,9 +805,9 @@ namespace ts.server {
             while (currentPath != parentPath) {
                 if (!project.projectService.directoryWatchersForTsconfig.get(currentPath)) {
                     this.log("Add watcher for: " + currentPath);
-                    _s(project.projectService.directoryWatchersForTsconfig, currentPath,
+                    project.projectService.directoryWatchersForTsconfig.set(currentPath,
                         this.host.watchDirectory(currentPath, fileName => this.directoryWatchedForTsconfigChanged(fileName)));
-                    _s(project.projectService.directoryWatchersRefCount, currentPath, 1);
+                    project.projectService.directoryWatchersRefCount.set(currentPath, 1);
                 }
                 else {
                     _mod(project.projectService.directoryWatchersRefCount, currentPath, refCount => refCount + 1);
@@ -831,7 +831,7 @@ namespace ts.server {
             }
 
             if (!info.isOpen) {
-                _s(this.filenameToScriptInfo, info.fileName, undefined);
+                this.filenameToScriptInfo.set(info.fileName, undefined);
                 const referencingProjects = this.findReferencingProjects(info);
                 if (info.defaultProject) {
                     info.defaultProject.removeRoot(info);
@@ -1162,7 +1162,7 @@ namespace ts.server {
                     info = new ScriptInfo(this.host, fileName, content, openedByClient);
                     info.scriptKind = scriptKind;
                     info.setFormatOptions(this.getFormatCodeOptions());
-                    _s(this.filenameToScriptInfo, fileName, info);
+                    this.filenameToScriptInfo.set(fileName, info);
                     if (!info.isOpen) {
                         info.fileWatcher = this.host.watchFile(fileName, _ => { this.watchedFileChanged(fileName); });
                     }
@@ -1445,13 +1445,13 @@ namespace ts.server {
                 return watchers;
             }, <Map<FileWatcher>>{});*/
 
-            project.directoriesWatchedForWildcards = createMap<FileWatcher>();
+            project.directoriesWatchedForWildcards = new StringMap<FileWatcher>();
             //neater
-            _each(createMapFromMapLike(projectOptions.wildcardDirectories), (directory, flag) => {
+            createMapFromMapLike(projectOptions.wildcardDirectories).forEach((flag, directory) => {
                 if (comparePaths(configDirectoryPath, directory, ".", !this.host.useCaseSensitiveFileNames) !== Comparison.EqualTo) {
                     const recursive = (flag & WatchDirectoryFlags.Recursive) !== 0;
                     this.log(`Add ${ recursive ? "recursive " : ""}watcher for: ${directory}`);
-                    _s(project.directoriesWatchedForWildcards, directory, this.host.watchDirectory(
+                    project.directoriesWatchedForWildcards.set(directory, this.host.watchDirectory(
                         directory,
                         path => this.directoryWatchedForSourceFilesChanged(project, path),
                         recursive

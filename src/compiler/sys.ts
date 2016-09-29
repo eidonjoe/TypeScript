@@ -239,9 +239,9 @@ namespace ts {
             const useNonPollingWatchers = process.env["TSC_NONPOLLING_WATCHER"];
 
             function createWatchedFileSet() {
-                const dirWatchers = createMap<DirectoryWatcher>();
+                const dirWatchers = new StringMap<DirectoryWatcher>();
                 // One file can have multiple watchers
-                const fileWatcherCallbacks = createMap<FileWatcherCallback[]>();
+                const fileWatcherCallbacks = new StringMap<FileWatcherCallback[]>();
                 return { addFile, removeFile };
 
                 function reduceDirWatcherRefCountForFile(fileName: string) {
@@ -268,7 +268,7 @@ namespace ts {
                         (eventName: string, relativeFileName: string) => fileEventHandler(eventName, relativeFileName, dirPath)
                     );
                     watcher.referenceCount = 1;
-                    _s(dirWatchers, dirPath, watcher);
+                    dirWatchers.set(dirPath, watcher);
                     return;
                 }
 

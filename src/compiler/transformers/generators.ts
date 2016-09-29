@@ -2074,7 +2074,7 @@ namespace ts {
 
             if (!renamedCatchVariables) {
                 renamedCatchVariables = createSet();
-                renamedCatchVariableDeclarations = createMap<Identifier>();
+                renamedCatchVariableDeclarations = new StringMap<Identifier>();
                 context.enableSubstitution(SyntaxKind.Identifier);
             }
 

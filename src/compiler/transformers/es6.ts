@@ -1698,9 +1698,9 @@ namespace ts {
         function visitLabeledStatement(node: LabeledStatement): VisitResult<Statement> {
             if (convertedLoopState) {
                 if (!convertedLoopState.labels) {
-                    convertedLoopState.labels = createMap<string>();
+                    convertedLoopState.labels = new StringMap<string>();
                 }
-                _s(convertedLoopState.labels, node.label.text, node.label.text);
+                convertedLoopState.labels.set(node.label.text, node.label.text);
             }
 
             let result: VisitResult<Statement>;
@@ -1712,7 +1712,7 @@ namespace ts {
             }
 
             if (convertedLoopState) {
-                _s(convertedLoopState.labels, node.label.text, undefined);
+                convertedLoopState.labels.set(node.label.text, undefined);
             }
 
             return result;
@@ -2306,15 +2306,15 @@ namespace ts {
         function setLabeledJump(state: ConvertedLoopState, isBreak: boolean, labelText: string, labelMarker: string): void {
             if (isBreak) {
                 if (!state.labeledNonLocalBreaks) {
-                    state.labeledNonLocalBreaks = createMap<string>();
+                    state.labeledNonLocalBreaks = new StringMap<string>();
                 }
-                _s(state.labeledNonLocalBreaks, labelText, labelMarker);
+                state.labeledNonLocalBreaks.set(labelText, labelMarker);
             }
             else {
                 if (!state.labeledNonLocalContinues) {
-                    state.labeledNonLocalContinues = createMap<string>();
+                    state.labeledNonLocalContinues = new StringMap<string>();
                 }
-                _s(state.labeledNonLocalContinues, labelText, labelMarker);
+                state.labeledNonLocalContinues.set(labelText, labelMarker);
             }
         }
 
@@ -2322,7 +2322,7 @@ namespace ts {
             if (!table) {
                 return;
             }
-            _each(table, (labelText, labelMarker) => {
+            table.forEach((labelMarker, labelText) => {
                 const statements: Statement[] = [];
                 // if there are no outer converted loop or outer label in question is located inside outer converted loop
                 // then emit labeled break\continue

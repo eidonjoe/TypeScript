@@ -48,7 +48,7 @@ namespace ts.JsTyping {
         { cachedTypingPaths: string[], newTypingNames: string[], filesToWatch: string[] } {
 
         // A typing name to typing file path mapping
-        const inferredTypings = createMap<string>();
+        const inferredTypings = new StringMap<string>();
 
         if (!typingOptions || !typingOptions.enableAutoDiscovery) {
             return { cachedTypingPaths: [], newTypingNames: [], filesToWatch: [] };
@@ -88,9 +88,9 @@ namespace ts.JsTyping {
         getTypingNamesFromSourceFileNames(fileNames);
 
         // Add the cached typing locations for inferred typings that are already installed
-        _each(packageNameToTypingLocation, (name, typingLocation) => {
+        packageNameToTypingLocation.forEach((typingLocation, name) => {
             if (inferredTypings.has(name) && !inferredTypings.get(name)) {
-                _s(inferredTypings, name, typingLocation);
+                inferredTypings.set(name, typingLocation);
             }
         });
 
@@ -102,7 +102,7 @@ namespace ts.JsTyping {
         const newTypingNames: string[] = [];
         const cachedTypingPaths: string[] = [];
 
-        _each(inferredTypings, (typing, inferredTyping) => {
+        inferredTypings.forEach((inferredTyping, typing) => {
             if (inferredTyping !== undefined) {
                 cachedTypingPaths.push(inferredTyping);
             }
@@ -122,7 +122,7 @@ namespace ts.JsTyping {
 
             for (const typing of typingNames) {
                 if (!inferredTypings.has(typing)) {
-                    _s(inferredTypings, typing, undefined);
+                    inferredTypings.set(typing, undefined);
                 }
             }
         }
@@ -211,7 +211,7 @@ namespace ts.JsTyping {
                 }
                 if (packageJson.typings) {
                     const absolutePath = getNormalizedAbsolutePath(packageJson.typings, getDirectoryPath(normalizedFileName));
-                    _s(inferredTypings, packageJson.name, absolutePath);
+                    inferredTypings.set(packageJson.name, absolutePath);
                 }
                 else {
                     typingNames.push(packageJson.name);

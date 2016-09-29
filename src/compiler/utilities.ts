@@ -112,18 +112,18 @@ namespace ts {
 
     export function setResolvedModule(sourceFile: SourceFile, moduleNameText: string, resolvedModule: ResolvedModule): void {
         if (!sourceFile.resolvedModules) {
-            sourceFile.resolvedModules = createMap<ResolvedModule>();
+            sourceFile.resolvedModules = new StringMap<ResolvedModule>();
         }
 
-        _s(sourceFile.resolvedModules, moduleNameText, resolvedModule);
+        sourceFile.resolvedModules.set(moduleNameText, resolvedModule);
     }
 
     export function setResolvedTypeReferenceDirective(sourceFile: SourceFile, typeReferenceDirectiveName: string, resolvedTypeReferenceDirective: ResolvedTypeReferenceDirective): void {
         if (!sourceFile.resolvedTypeReferenceDirectiveNames) {
-            sourceFile.resolvedTypeReferenceDirectiveNames = createMap<ResolvedTypeReferenceDirective>();
+            sourceFile.resolvedTypeReferenceDirectiveNames = new StringMap<ResolvedTypeReferenceDirective>();
         }
 
-        _s(sourceFile.resolvedTypeReferenceDirectiveNames, typeReferenceDirectiveName, resolvedTypeReferenceDirective);
+        sourceFile.resolvedTypeReferenceDirectiveNames.set(typeReferenceDirectiveName, resolvedTypeReferenceDirective);
     }
 
     /* @internal */
@@ -2219,7 +2219,7 @@ namespace ts {
 
     export function createDiagnosticCollection(): DiagnosticCollection {
         let nonFileDiagnostics: Diagnostic[] = [];
-        const fileDiagnostics = createMap<Diagnostic[]>();
+        const fileDiagnostics = new StringMap<Diagnostic[]>();
 
         let diagnosticsModified = false;
         let modificationCount = 0;
@@ -2252,7 +2252,7 @@ namespace ts {
                 diagnostics = fileDiagnostics.get(diagnostic.file.fileName);
                 if (!diagnostics) {
                     diagnostics = [];
-                    _s(fileDiagnostics, diagnostic.file.fileName, diagnostics);
+                    fileDiagnostics.set(diagnostic.file.fileName, diagnostics);
                 }
             }
             else {
@@ -3363,7 +3363,7 @@ namespace ts {
         return false;
     }
 
-    const syntaxKindCache = createMap<string>();
+    const syntaxKindCache = new StringMap<string>();
 
     export function formatSyntaxKind(kind: SyntaxKind): string {
         const syntaxKindEnum = (<any>ts).SyntaxKind;
@@ -3511,7 +3511,7 @@ namespace ts {
 
     export function collectExternalModuleInfo(sourceFile: SourceFile, resolver: EmitResolver) {
         const externalImports: (ImportDeclaration | ImportEqualsDeclaration | ExportDeclaration)[] = [];
-        const exportSpecifiers = createMap<ExportSpecifier[]>();
+        const exportSpecifiers = new StringMap<ExportSpecifier[]>();
         let exportEquals: ExportAssignment = undefined;
         let hasExportStarsToExportValues = false;
         for (const node of sourceFile.statements) {

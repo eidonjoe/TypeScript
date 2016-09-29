@@ -493,7 +493,7 @@ namespace ts {
         }
 
         private computeNamedDeclarations(): Map<Declaration[]> {
-            const result = createMap<Declaration[]>();
+            const result = new StringMap<Declaration[]>();
 
             forEachChild(this, visit);
 
@@ -1831,7 +1831,7 @@ namespace ts {
     }
 
     function initializeNameTable(sourceFile: SourceFile): void {
-        const nameTable = createMap<number>();
+        const nameTable = new StringMap<number>();
 
         walk(sourceFile);
         sourceFile.nameTable = nameTable;
@@ -1839,7 +1839,7 @@ namespace ts {
         function walk(node: Node) {
             switch (node.kind) {
                 case SyntaxKind.Identifier:
-                    _s(nameTable, (<Identifier>node).text, nameTable.get((<Identifier>node).text) === undefined ? node.pos : -1);
+                    nameTable.set((<Identifier>node).text, nameTable.get((<Identifier>node).text) === undefined ? node.pos : -1);
                     break;
                 case SyntaxKind.StringLiteral:
                 case SyntaxKind.NumericLiteral:
@@ -1852,7 +1852,7 @@ namespace ts {
                         isArgumentOfElementAccessExpression(node) ||
                         isLiteralComputedPropertyDeclarationName(node)) {
 
-                        _s(nameTable, (<LiteralExpression>node).text, nameTable.get((<LiteralExpression>node).text) === undefined ? node.pos : -1);
+                        nameTable.set((<LiteralExpression>node).text, nameTable.get((<LiteralExpression>node).text) === undefined ? node.pos : -1);
                     }
                     break;
                 default:

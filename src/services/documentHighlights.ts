@@ -39,7 +39,7 @@ namespace ts.DocumentHighlights {
                     return undefined;
                 }
 
-                const fileNameToDocumentHighlights = createMap<DocumentHighlights>();
+                const fileNameToDocumentHighlights = new StringMap<DocumentHighlights>();
                 const result: DocumentHighlights[] = [];
                 for (const referencedSymbol of referencedSymbols) {
                     for (const referenceEntry of referencedSymbol.references) {
@@ -48,7 +48,7 @@ namespace ts.DocumentHighlights {
                         if (!documentHighlights) {
                             documentHighlights = { fileName, highlightSpans: [] };
 
-                            _s(fileNameToDocumentHighlights, fileName, documentHighlights);
+                            fileNameToDocumentHighlights.set(fileName, documentHighlights);
                             result.push(documentHighlights);
                         }
 

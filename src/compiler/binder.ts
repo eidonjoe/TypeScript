@@ -190,11 +190,11 @@ namespace ts {
             symbol.declarations.push(node);
 
             if (symbolFlags & SymbolFlags.HasExports && !symbol.exports) {
-                symbol.exports = createMap<Symbol>();
+                symbol.exports = new StringMap<Symbol>();
             }
 
             if (symbolFlags & SymbolFlags.HasMembers && !symbol.members) {
-                symbol.members = createMap<Symbol>();
+                symbol.members = new StringMap<Symbol>();
             }
 
             if (symbolFlags & SymbolFlags.Value) {
@@ -342,7 +342,7 @@ namespace ts {
                     if (symbol.isReplaceableByMethod) {
                         // Javascript constructor-declared symbols can be discarded in favor of
                         // prototype symbols like methods.
-                        symbol = _s(symbolTable, name, createSymbol(SymbolFlags.None, name));
+                        symbol = setAndReturn(symbolTable, name, createSymbol(SymbolFlags.None, name));
                     }
                     else {
                         if (node.name) {
@@ -450,7 +450,7 @@ namespace ts {
             if (containerFlags & ContainerFlags.IsContainer) {
                 container = blockScopeContainer = node;
                 if (containerFlags & ContainerFlags.HasLocals) {
-                    container.locals = createMap<Symbol>();
+                    container.locals = new StringMap<Symbol>();
                 }
                 addToContainerChain(container);
             }
@@ -1453,7 +1453,7 @@ namespace ts {
             }
 
             if (inStrictMode) {
-                const seen = createMap<ElementKind>();
+                const seen = new StringMap<ElementKind>();
 
                 for (const prop of node.properties) {
                     if (prop.name.kind !== SyntaxKind.Identifier) {
@@ -1476,7 +1476,7 @@ namespace ts {
 
                     const existingKind = seen.get(identifier.text);
                     if (!existingKind) {
-                        _s(seen, identifier.text, currentKind);
+                        seen.set(identifier.text, currentKind);
                         continue;
                     }
 
@@ -1509,7 +1509,7 @@ namespace ts {
                 // fall through.
                 default:
                     if (!blockScopeContainer.locals) {
-                        blockScopeContainer.locals = createMap<Symbol>();
+                        blockScopeContainer.locals = new StringMap<Symbol>();
                         addToContainerChain(blockScopeContainer);
                     }
                     declareSymbol(blockScopeContainer.locals, undefined, node, symbolFlags, symbolExcludes);
@@ -1971,7 +1971,7 @@ namespace ts {
                 }
             }
 
-            file.symbol.globalExports = file.symbol.globalExports || createMap<Symbol>();
+            file.symbol.globalExports = file.symbol.globalExports || new StringMap<Symbol>();
             declareSymbol(file.symbol.globalExports, file.symbol, node, SymbolFlags.Alias, SymbolFlags.AliasExcludes);
         }
 
@@ -2016,7 +2016,7 @@ namespace ts {
             Debug.assert(isInJavaScriptFile(node));
             // Declare a 'member' if the container is an ES5 class or ES6 constructor
             if (container.kind === SyntaxKind.FunctionDeclaration || container.kind === SyntaxKind.FunctionExpression) {
-                container.symbol.members = container.symbol.members || createMap<Symbol>();
+                container.symbol.members = container.symbol.members || new StringMap<Symbol>();
                 // It's acceptable for multiple 'this' assignments of the same identifier to occur
                 declareSymbol(container.symbol.members, container.symbol, node, SymbolFlags.Property, SymbolFlags.PropertyExcludes & ~SymbolFlags.Property);
             }
@@ -2055,7 +2055,7 @@ namespace ts {
 
             // Set up the members collection if it doesn't exist already
             if (!funcSymbol.members) {
-                funcSymbol.members = createMap<Symbol>();
+                funcSymbol.members = new StringMap<Symbol>();
             }
 
             // Declare the method/property
@@ -2112,7 +2112,7 @@ namespace ts {
                 file.bindDiagnostics.push(createDiagnosticForNode(symbolExport.declarations[0],
                     Diagnostics.Duplicate_identifier_0, prototypeSymbol.name));
             }
-            _s(symbol.exports, prototypeSymbol.name, prototypeSymbol);
+            symbol.exports.set(prototypeSymbol.name, prototypeSymbol);
             prototypeSymbol.parent = symbol;
         }
 

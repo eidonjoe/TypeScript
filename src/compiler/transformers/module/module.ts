@@ -43,7 +43,7 @@ namespace ts {
         let bindingNameExportSpecifiersMap: Map<ExportSpecifier[]>;
         // Subset of exportSpecifiers that is a binding-name.
         // This is to reduce amount of memory we have to keep around even after we done with module-transformer
-        const bindingNameExportSpecifiersForFileMap = createMap<Map<ExportSpecifier[]>>();
+        const bindingNameExportSpecifiersForFileMap = new StringMap<Map<ExportSpecifier[]>>();
         let hasExportStarsToExportValues: boolean;
 
         return transformSourceFile;
@@ -669,9 +669,9 @@ namespace ts {
                 if (!exportEquals && exportSpecifiers && exportSpecifiers.has(name.text)) {
                     const sourceFileId = getOriginalNodeId(currentSourceFile);
                     if (!_getWakka(bindingNameExportSpecifiersForFileMap, sourceFileId)) {
-                        _setWakka(bindingNameExportSpecifiersForFileMap, sourceFileId, createMap<ExportSpecifier[]>());
+                        _setWakka(bindingNameExportSpecifiersForFileMap, sourceFileId, new StringMap<ExportSpecifier[]>());
                     }
-                    _s(_getWakka(bindingNameExportSpecifiersForFileMap, sourceFileId), name.text, exportSpecifiers.get(name.text));
+                    _getWakka(bindingNameExportSpecifiersForFileMap, sourceFileId).set(name.text, exportSpecifiers.get(name.text));
                     addExportMemberAssignments(resultStatements, name);
                 }
             }

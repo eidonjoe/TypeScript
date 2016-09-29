@@ -15,7 +15,7 @@ namespace ts {
         //__mapBrand: T;
 
         clear(): void;
-        delete(key: string): boolean;
+        delete(key: string): void;
         get(key: string): T;
         //TODO: many calls to _has could be replaced by calling '_get' and checking the result
         has(key: string): boolean;
@@ -54,7 +54,7 @@ namespace ts {
 
     interface NativeMap<T> extends Map<T> {
         clear(): void;
-        delete(key: string): boolean;
+        delete(key: string): void;
         get(key: string): T;
         has(key: string): boolean;
         set(key: string, value: T): this;
@@ -67,7 +67,7 @@ namespace ts {
         forEach(f: (value: T, key: string) => void): void;
     }
 
-    class ShimMap<T> {
+    class ShimMap<T> implements Map<T> {
         private data: { [key: string]: T };
 
         constructor() {
@@ -103,28 +103,30 @@ namespace ts {
 
     declare const Map: { new<T>(): NativeMap<T> } | undefined;
     const realMaps = typeof Map !== "undefined";
+    export const StringMap: { new<T>(): Map<T> } = realMaps ? Map : ShimMap;
 
     const createObject = Object.create;
     const hasOwnProperty = Object.prototype.hasOwnProperty;
 
-    export const createMap: <T>() => Map<T> = realMaps
-        ? <T>() => new Map<T>()
-        : createDictionaryModeObject;
+    //export const createMap: <T>() => Map<T> = realMaps
+    //    ? <T>() => new Map<T>()
+    //    : createDictionaryModeObject;
 
     //rename, move
+    //TODO: just use `new StringMap([[key, value]])?
     export function createMapWithEntry<T>(key: string, value: T): Map<T> {
-        const map = createMap<T>();
-        _s(map, key, value);
+        const map = new StringMap<T>();
+        map.set(key, value);
         return map;
     }
 
     //move
     export function createMapFromMapLike<T>(template: MapLike<T>) {
-        const map = createMap<T>();
+        const map = new StringMap<T>();
         // Copies keys/values from template. Note that for..in will not throw if
         // template is undefined, and instead will just exit the loop.
         for (const key in template) if (hasOwnProperty.call(template, key)) {
-            _s(map, key, template[key]);
+            map.set(key, template[key]);
         }
         return map;
     }
@@ -146,12 +148,17 @@ namespace ts {
     //    ? <T>(map: NativeMap<T>, key: string) => map.get(key)
     //    : <T>(map: MapLike<T>, key: string) => map[key];
 
-    export const _s: <T>(map: Map<T>, key: string, value: T) => T = realMaps
-        ? <T>(map: NativeMap<T>, key: string, value: T) => {
-            map.set(key, value);
-            return value;
-        }
-        : <T>(map: MapLike<T>, key: string, value: T) => map[key] = value;
+    //export const _s: <T>(map: Map<T>, key: string, value: T) => T = realMaps
+    //    ? <T>(map: NativeMap<T>, key: string, value: T) => {
+    //        map.set(key, value);
+    //        return value;
+    //    }
+    //    : <T>(map: MapLike<T>, key: string, value: T) => map[key] = value;
+
+    export function setAndReturn<T>(map: Map<T>, key: string, value: T): T {
+        map.set(key, value);
+        return value;
+    }
 
     //export const _has: (map: Map<any>, key: string) => boolean = realMaps
     //    ? (map: NativeMap<any>, key: string) => map.has(key)
@@ -165,7 +172,7 @@ namespace ts {
     //       delete map[key];
     //    };
 
-    export const _each: <T>(map: Map<T>, f: (key: string, value: T) => void) => void = realMaps
+    /*export const _each: <T>(map: Map<T>, f: (key: string, value: T) => void) => void = realMaps
         ? <T>(map: NativeMap<T>, f: (key: string, value: T) => void) => {
             /*const iter = map.entries();
             while (true) {
@@ -175,14 +182,14 @@ namespace ts {
                 }
                 const [key, value] = pair;
                 f(key, value);
-            }*/
+            }* /
             map.forEach((value, key) => { f(key, value) }); // No idea whether this is better or worse...
         }
         : <T>(map: MapLike<T>, f: (key: string, value: T) => void): void => {
             for (const key in map) {
                 f(key, map[key]);
             }
-        };
+        };*/
 
     export const _find: <T, U>(map: Map<T>, f: (key: string, value: T) => U | undefined) => U | undefined = realMaps
         ? <T, U>(map: NativeMap<T>, f: (key: string, value: T) => U | undefined) => {
@@ -337,7 +344,7 @@ namespace ts {
     export const _toMapLike: <T>(map: Map<T>) => MapLike<T> = realMaps
         ? <T>(map: NativeMap<T>) => {
             const obj = createDictionaryModeObject();
-            _each(map, (key, value) => {
+            map.forEach((value, key) => {
                 obj[key] = value;
             });
             return obj;
@@ -388,15 +395,15 @@ namespace ts {
         return map.get(key.toString());
     }
     export function _setWakka<T>(map: Map<T>, key: any, value: T): T {
-        return _s(map, key.toString(), value);
+        return setAndReturn(map, key.toString(), value);
     }
 
     export function _mod<T>(map: Map<T>, key: string, modifier: (value: T) => T) {
-        _s(map, key, modifier(map.get(key)));
+        map.set(key, modifier(map.get(key)));
     }
 
     export function cloneMap<T>(map: Map<T>) {
-        const clone = createMap<T>();
+        const clone = new StringMap<T>();
         copyMapPropertiesFromTo(map, clone);
         return clone;
     }
@@ -409,8 +416,8 @@ namespace ts {
      */
     //rename : "entries", not "properties"
     export function copyMapPropertiesFromTo<T>(source: Map<T>, target: Map<T>): void {
-        _each(source, (key, value) => {
-            _s(target, key, value);
+        source.forEach((value, key) => {
+            target.set(key, value);
         });
     }
 
@@ -432,15 +439,15 @@ namespace ts {
      */
     export function reduceProperties<T, U>(map: Map<T>, callback: (aggregate: U, value: T, key: string) => U, initial: U): U {
         let result = initial;
-        _each(map, (key, value) => {
+        map.forEach((value, key) => {
             result = callback(result, value, String(key)); //why cast to string???
         });
         return result;
     }
 
     export function _mapValuesMutate<T>(map: Map<T>, mapValue: (value: T) => T): void {
-        _each(map, (key, value) => {
-            _s(map, key, mapValue(value));
+        map.forEach((value, key) => {
+            map.set(key, mapValue(value));
         });
     }
 
@@ -453,7 +460,7 @@ namespace ts {
     }
 
     export function _getOrUpdate<T>(map: Map<T>, key: string, getValue: (key: string) => T): T {
-        return map.has(key) ? map.get(key) : _s(map, key, getValue(key));
+        return map.has(key) ? map.get(key) : setAndReturn(map, key, getValue(key));
     }
 
     /**
@@ -469,9 +476,9 @@ namespace ts {
     export function arrayToMap<T>(array: T[], makeKey: (value: T) => string): Map<T>;
     export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue: (value: T) => U): Map<U>;
     export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue?: (value: T) => U): Map<T | U> {
-        const result = createMap<T | U>();
+        const result = new StringMap<T | U>();
         for (const value of array) {
-            _s(result, makeKey(value), makeValue ? makeValue(value) : value);
+            result.set(makeKey(value), makeValue ? makeValue(value) : value);
         }
         return result;
     }
@@ -487,7 +494,7 @@ namespace ts {
             return values;
         }
         else {
-            return _s(map, key, [value]);
+            return setAndReturn(map, key, [value]);
         }
     }
 

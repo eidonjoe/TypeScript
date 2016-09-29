@@ -206,7 +206,7 @@ namespace ts {
         const transformId = nextTransformId;
         nextTransformId++;
 
-        const tokenSourceMapRanges = createMap<TextRange>();
+        const tokenSourceMapRanges = new StringMap<TextRange>();
         const lexicalEnvironmentVariableDeclarationsStack: VariableDeclaration[][] = [];
         const lexicalEnvironmentFunctionDeclarationsStack: FunctionDeclaration[][] = [];
         const enabledSyntaxKindFeatures = new Array<SyntaxKindFeatureFlags>(SyntaxKind.Count);
@@ -458,7 +458,7 @@ namespace ts {
             lastTokenSourceMapRangeNode = node;
             lastTokenSourceMapRangeToken = token;
             lastTokenSourceMapRange = range;
-            _s(tokenSourceMapRanges, getNodeId(node) + "-" + token, range);
+            tokenSourceMapRanges.set(getNodeId(node) + "-" + token, range);
             return node;
         }
 

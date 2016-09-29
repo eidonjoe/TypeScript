@@ -116,8 +116,8 @@ namespace ts {
         private getCanonicalFileName: (s: string) => string;
         private toPath: (f: string) => Path;
         private callbackQueue: TimeOutCallback[] = [];
-        readonly watchedDirectories = createMap<{ cb: DirectoryWatcherCallback, recursive: boolean }[]>();
-        readonly watchedFiles = createMap<FileWatcherCallback[]>();
+        readonly watchedDirectories = new StringMap<{ cb: DirectoryWatcherCallback, recursive: boolean }[]>();
+        readonly watchedFiles = new StringMap<FileWatcherCallback[]>();
 
         constructor(public useCaseSensitiveFileNames: boolean, private executingFilePath: string, private currentDirectory: string, fileOrFolderList: FileOrFolder[]) {
             this.getCanonicalFileName = createGetCanonicalFileName(useCaseSensitiveFileNames);

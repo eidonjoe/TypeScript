@@ -208,7 +208,7 @@ namespace FourSlash {
 
         public formatCodeOptions: ts.FormatCodeOptions;
 
-        private inputFiles = ts.createMap<string>();  // Map between inputFile's fileName and its content for easily looking up when resolving references
+        private inputFiles = new ts.StringMap<string>();  // Map between inputFile's fileName and its content for easily looking up when resolving references
 
         private static getDisplayPartsJson(displayParts: ts.SymbolDisplayPart[]) {
             let result = "";
@@ -275,7 +275,7 @@ namespace FourSlash {
 
             ts.forEach(testData.files, file => {
                 // Create map between fileName and its content for easily looking up when resolveReference flag is specified
-                ts._s(this.inputFiles, file.fileName, file.content);
+                this.inputFiles.set(file.fileName, file.content);
 
                 if (ts.getBaseFileName(file.fileName).toLowerCase() === "tsconfig.json") {
                     const configJson = ts.parseConfigFileTextToJson(file.fileName, file.content);
@@ -341,7 +341,7 @@ namespace FourSlash {
             }
             else {
                 // resolveReference file-option is not specified then do not resolve any files and include all inputFiles
-                ts._each(this.inputFiles, (fileName, inputFile) => {
+                this.inputFiles.forEach((inputFile, fileName) => {
                     if (!Harness.isDefaultLibraryFile(fileName)) {
                         this.languageServiceAdapterHost.addScript(fileName, inputFile, /*isRootFile*/ true);
                     }
@@ -697,10 +697,10 @@ namespace FourSlash {
 
         public noItemsWithSameNameButDifferentKind(): void {
             const completions = this.getCompletionListAtCaret();
-            const uniqueItems = ts.createMap<string>();
+            const uniqueItems = new ts.StringMap<string>();
             for (const item of completions.entries) {
                 if (!uniqueItems.has(item.name)) {
-                    ts._s(uniqueItems, item.name, item.kind);
+                    uniqueItems.set(item.name, item.kind);
                 }
                 else {
                     assert.equal(item.kind, uniqueItems.get(item.name), `Items should have the same kind, got ${item.kind} and ${uniqueItems.get(item.name)}`);
@@ -966,7 +966,7 @@ namespace FourSlash {
 
         public verifyQuickInfos(namesAndTexts: { [name: string]: string | [string, string] }) {
             //TODO: don't bother creating a map
-            ts._each(ts.createMapFromMapLike(namesAndTexts), (name, text) => {
+            ts.createMapFromMapLike(namesAndTexts).forEach((text, name) => {
                 if (text instanceof Array) {
                     assert(text.length === 2);
                     const [expectedText, expectedDocumentation] = text;
@@ -1813,7 +1813,7 @@ namespace FourSlash {
         }
 
         private rangesByTextMap(): ts.Map<Range[]> {
-            const result = ts.createMap<Range[]>();
+            const result = new ts.StringMap<Range[]>();
             for (const range of this.getRanges()) {
                 const text = this.rangeText(range);
                 ts.multiMapAdd(result, text, range);

@@ -917,7 +917,7 @@ namespace ts {
 
         function writeFileIfUpdated(fileName: string, data: string, writeByteOrderMark: boolean): void {
             if (!outputFingerprints) {
-                outputFingerprints = createMap<OutputFingerprint>();
+                outputFingerprints = new StringMap<OutputFingerprint>();
             }
 
             const hash = sys.createHash(data);
@@ -938,7 +938,7 @@ namespace ts {
 
             const mtimeAfter = sys.getModifiedTime(fileName);
 
-            _s(outputFingerprints, fileName, {
+            outputFingerprints.set(fileName, {
                 hash,
                 byteOrderMark: writeByteOrderMark,
                 mtime: mtimeAfter
@@ -1060,11 +1060,11 @@ namespace ts {
             return [];
         }
         const resolutions: T[] = [];
-        const cache = createMap<T>();
+        const cache = new StringMap<T>();
         for (const name of names) {
             const result = cache.has(name)
                 ? cache.get(name)
-                : _s(cache, name, loader(name, containingFile));
+                : setAndReturn(cache, name, loader(name, containingFile));
             resolutions.push(result);
         }
         return resolutions;
@@ -1116,7 +1116,7 @@ namespace ts {
         let noDiagnosticsTypeChecker: TypeChecker;
         let classifiableNames: Set;
 
-        let resolvedTypeReferenceDirectives = createMap<ResolvedTypeReferenceDirective>();
+        let resolvedTypeReferenceDirectives = new StringMap<ResolvedTypeReferenceDirective>();
         let fileProcessingDiagnostics = createDiagnosticCollection();
 
         // The below settings are to track if a .js file should be add to the program if loaded via searching under node_modules.
@@ -1131,10 +1131,10 @@ namespace ts {
 
         // If a module has some of its imports skipped due to being at the depth limit under node_modules, then track
         // this, as it may be imported at a shallower depth later, and then it will need its skipped imports processed.
-        const modulesWithElidedImports = createMap<boolean>();
+        const modulesWithElidedImports = new StringMap<boolean>();
 
         // Track source files that are source files found by searching under node_modules, as these shouldn't be compiled.
-        const sourceFilesFoundSearchingNodeModules = createMap<boolean>();
+        const sourceFilesFoundSearchingNodeModules = new StringMap<boolean>();
 
         performance.mark("beforeProgram");
 
@@ -1966,19 +1966,19 @@ namespace ts {
                 // If the file was previously found via a node_modules search, but is now being processed as a root file,
                 // then everything it sucks in may also be marked incorrectly, and needs to be checked again.
                 if (file && sourceFilesFoundSearchingNodeModules.get(file.path) && currentNodeModulesDepth == 0) {
-                    _s(sourceFilesFoundSearchingNodeModules, file.path, false);
+                    sourceFilesFoundSearchingNodeModules.set(file.path, false);
                     if (!options.noResolve) {
                         processReferencedFiles(file, getDirectoryPath(fileName), isDefaultLib);
                         processTypeReferenceDirectives(file);
                     }
 
-                    _s(modulesWithElidedImports, file.path, false);
+                    modulesWithElidedImports.set(file.path, false);
                     processImportedModules(file, getDirectoryPath(fileName));
                 }
                 // See if we need to reprocess the imports due to prior skipped imports
                 else if (file && modulesWithElidedImports.get(file.path)) {
                     if (currentNodeModulesDepth < maxNodeModulesJsDepth) {
-                        _s(modulesWithElidedImports, file.path, false);
+                        modulesWithElidedImports.set(file.path, false);
                         processImportedModules(file, getDirectoryPath(fileName));
                     }
                 }
@@ -1999,7 +1999,7 @@ namespace ts {
 
             filesByName.set(path, file);
             if (file) {
-                _s(sourceFilesFoundSearchingNodeModules, path, currentNodeModulesDepth > 0);
+                sourceFilesFoundSearchingNodeModules.set(path, currentNodeModulesDepth > 0);
                 file.path = path;
 
                 if (host.useCaseSensitiveFileNames()) {
@@ -2098,7 +2098,7 @@ namespace ts {
             }
 
             if (saveResolution) {
-                _s(resolvedTypeReferenceDirectives, typeReferenceDirective, resolvedTypeReferenceDirective);
+                resolvedTypeReferenceDirectives.set(typeReferenceDirective, resolvedTypeReferenceDirective);
             }
         }
 
@@ -2118,7 +2118,7 @@ namespace ts {
         function processImportedModules(file: SourceFile, basePath: string) {
             collectExternalModuleReferences(file);
             if (file.imports.length || file.moduleAugmentations.length) {
-                file.resolvedModules = createMap<ResolvedModule>();
+                file.resolvedModules = new StringMap<ResolvedModule>();
                 const moduleNames = map(concatenate(file.imports, file.moduleAugmentations), getTextOfLiteral);
                 const resolutions = resolveModuleNamesWorker(moduleNames, getNormalizedAbsolutePath(file.fileName, currentDirectory));
                 for (let i = 0; i < moduleNames.length; i++) {
@@ -2142,7 +2142,7 @@ namespace ts {
                     const shouldAddFile = resolution && !options.noResolve && i < file.imports.length && !elideImport;
 
                     if (elideImport) {
-                        _s(modulesWithElidedImports, file.path, true);
+                        modulesWithElidedImports.set(file.path, true);
                     }
                     else if (shouldAddFile) {
                         findSourceFile(resolution.resolvedFileName,

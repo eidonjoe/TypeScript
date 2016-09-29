@@ -74,7 +74,7 @@ function buildUniqueNameMap(names: string[]): ts.Map<string> {
     var uniqueNames = NameGenerator.ensureUniqueness(names, /* isCaseSensitive */ false, /* isFixed */ undefined);
 
     for (var i = 0; i < names.length; i++) {
-        ts._s(nameMap, names[i], uniqueNames[i]);
+        nameMap.set(names[i], uniqueNames[i]);
     }
 
     return nameMap;
@@ -91,7 +91,7 @@ function buildInfoFileOutput(messageTable: InputDiagnosticMessageTable, nameMap:
     for (var i = 0; i < names.length; i++) {
         var name = names[i];
         var diagnosticDetails = messageTable[name];
-        var propName = convertPropertyName(ts._g(nameMap, name));
+        var propName = convertPropertyName(nameMap.get(name));
 
         result +=
         '        ' + propName +
@@ -114,7 +114,7 @@ function buildDiagnosticMessageOutput(messageTable: InputDiagnosticMessageTable,
     for (var i = 0; i < names.length; i++) {
         var name = names[i];
         var diagnosticDetails = messageTable[name];
-        var propName = convertPropertyName(ts._g(nameMap, name));
+        var propName = convertPropertyName(nameMap.get(name));
 
         result += '\r\n  "' + createKey(propName, diagnosticDetails.code) + '"' + ' : "' + name.replace(/[\"]/g, '\\"') + '"';
         if (i !== names.length - 1) {

@@ -363,8 +363,8 @@ namespace ts.server {
         class InProcClient {
             private server: InProcSession;
             private seq = 0;
-            private callbacks = createMap<(resp: protocol.Response) => void>();
-            private eventHandlers = createMap<(args: any) => void>();
+            private callbacks = new StringMap<(resp: protocol.Response) => void>();
+            private eventHandlers = new StringMap<(args: any) => void>();
 
             handle(msg: protocol.Message): void {
                 if (msg.type === "response") {
@@ -387,7 +387,7 @@ namespace ts.server {
             }
 
             on(name: string, handler: (args: any) => void): void {
-                _s(this.eventHandlers, name, handler);
+                this.eventHandlers.set(name, handler);
             }
 
             connect(session: InProcSession): void {

@@ -425,7 +425,7 @@ namespace ts {
             }
 
             // reset the cache of existing files
-            cachedExistingFiles = createMap<boolean>();
+            cachedExistingFiles = new StringMap<boolean>();
 
             const compileResult = compile(rootFileNames, compilerOptions, compilerHost);
 
@@ -440,7 +440,7 @@ namespace ts {
         function cachedFileExists(fileName: string): boolean {
             return cachedExistingFiles.has(fileName)
                 ? cachedExistingFiles.get(fileName)
-                : _s(cachedExistingFiles, fileName, hostFileExists(fileName));
+                : setAndReturn(cachedExistingFiles, fileName, hostFileExists(fileName));
             //return fileName in cachedExistingFiles
             //     ? cachedExistingFiles[fileName]
             //    : cachedExistingFiles[fileName] = hostFileExists(fileName);
@@ -703,7 +703,7 @@ namespace ts {
         const usageColumn: string[] = []; // Things like "-d, --declaration" go in here.
         const descriptionColumn: string[] = [];
 
-        const optionsDescriptionMap = createMap<string[]>();  // Map between option.description and list of option.type if it is a kind
+        const optionsDescriptionMap = new StringMap<string[]>();  // Map between option.description and list of option.type if it is a kind
 
         for (let i = 0; i < optsList.length; i++) {
             const option = optsList[i];
@@ -735,7 +735,7 @@ namespace ts {
                 _eachKey(typeMap, key => {
                     options.push(`'${key}'`);
                 });
-                _s(optionsDescriptionMap, description, options);
+                optionsDescriptionMap.set(description, options);
             }
             else {
                 description = getDiagnosticText(option.description);

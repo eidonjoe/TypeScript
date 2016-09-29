@@ -218,7 +218,7 @@ namespace ts {
             assert.isTrue(typeof diags[0].messageText === "string" && ((<string>diags[0].messageText).indexOf("Cannot find module") === 0), "should be 'cannot find module' message");
 
             // assert that import will success once file appear on disk
-            _s(fileMap, imported.name, imported);
+            fileMap.set(imported.name, imported);
             fileExistsCalledForBar = false;
             rootScriptInfo.editContent(0, content.length, `import {y} from "bar"`);
 

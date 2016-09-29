@@ -21,7 +21,7 @@ namespace ts {
     }
 
     export function createFileMap<T>(keyMapper?: (key: string) => string): FileMap<T> {
-        let files = createMap<T>();
+        const files = new StringMap<T>();
         return {
             get,
             set,
@@ -32,7 +32,7 @@ namespace ts {
         };
 
         function forEachValueInMap(f: (key: Path, value: T) => void) {
-            _each(files, f);
+            files.forEach((value, key) => f(key as Path, value));
         }
 
         // path should already be well-formed so it does not need to be normalized
@@ -41,7 +41,7 @@ namespace ts {
         }
 
         function set(path: Path, value: T) {
-            _s(files, toKey(path), value);
+            files.set(toKey(path), value);
         }
 
         function contains(path: Path) {
@@ -54,7 +54,7 @@ namespace ts {
         }
 
         function clear() {
-            files = createMap<T>();
+            files.clear();
         }
 
         function toKey(path: Path): string {

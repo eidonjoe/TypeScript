@@ -935,7 +935,7 @@ namespace Harness {
             }
 
             if (!libFileNameSourceFileMap.get(fileName)) {
-                ts._s(libFileNameSourceFileMap, fileName, createSourceFileAndAssertInvariants(fileName, IO.readFile(libFolder + fileName), ts.ScriptTarget.Latest));
+                libFileNameSourceFileMap.set(fileName, createSourceFileAndAssertInvariants(fileName, IO.readFile(libFolder + fileName), ts.ScriptTarget.Latest));
             }
             return libFileNameSourceFileMap.get(fileName);
         }
@@ -1082,10 +1082,10 @@ namespace Harness {
         let optionsIndex: ts.Map<ts.CommandLineOption>;
         function getCommandLineOption(name: string): ts.CommandLineOption {
             if (!optionsIndex) {
-                optionsIndex = ts.createMap<ts.CommandLineOption>();
+                optionsIndex = new ts.StringMap<ts.CommandLineOption>();
                 const optionDeclarations = harnessOptionDeclarations.concat(ts.optionDeclarations);
                 for (const option of optionDeclarations) {
-                    ts._s(optionsIndex, option.name.toLowerCase(), option);
+                    optionsIndex.set(option.name.toLowerCase(), option);
                 }
             }
             return optionsIndex.get(name.toLowerCase());
@@ -1439,10 +1439,10 @@ namespace Harness {
 
             const fullWalker = new TypeWriterWalker(program, /*fullTypeCheck*/ true);
 
-            const fullResults = ts.createMap<TypeWriterResult[]>();
+            const fullResults = new ts.StringMap<TypeWriterResult[]>();
 
             for (const sourceFile of allFiles) {
-                ts._s(fullResults, sourceFile.unitName, fullWalker.getTypeAndSymbols(sourceFile.unitName));
+                fullResults.set(sourceFile.unitName, fullWalker.getTypeAndSymbols(sourceFile.unitName));
             }
 
             // Produce baselines.  The first gives the types for all expressions.

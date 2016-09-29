@@ -61,7 +61,7 @@ namespace ts.Completions {
         function getJavaScriptCompletionEntries(sourceFile: SourceFile, position: number, uniqueNames: Set): CompletionEntry[] {
             const entries: CompletionEntry[] = [];
 
-            _each(getNameTable(sourceFile), (name, nameTablePosition) => {
+            getNameTable(sourceFile).forEach((nameTablePosition, name) => {
                 // Skip identifiers produced only from the current location
                 if (nameTablePosition === position) {
                     return;
